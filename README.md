@@ -28,6 +28,10 @@ A WordPress plugin implementing [barba.fullscreen.js](https://github.com/thisbai
 
 [WordPress-Plugin-Boilerplate](https://github.com/devinvinson/WordPress-Plugin-Boilerplate/)
 
+A demo site using the WordPress default [Twenty Seventeen](https://github.com/WordPress/twentyseventeen) theme can be viewed at [http://wpbarbafullscreen.thisbailiwick.com](http://wpbarbafullscreen.thisbailiwick.com)
+
+The child theme used for the above demo has a [repository](https://github.com/thisbailiwick/wp.barba.js.fullscreen.demo.theme).
+
 == Installation ==
 
 This section describes how to install the plugin and get it working.
