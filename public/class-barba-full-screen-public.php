@@ -95,21 +95,7 @@ class Barba_Full_Screen_Public {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/dist/barba-full-screen-public.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( $this->plugin_name . '-barba', plugin_dir_url( __FILE__ ) . 'js/barba.js', array( ), $this->version, false );
-
-	}
-
-	/**
-	 * Actions to run in the footer
-	 *
-	 * @since    1.0.0
-	 */
-	public function footer_actions() {
-		function your_function() {
-			echo '<p class="fullscreen-toggle"></p>';
-		}
-		add_action( 'wp_footer', 'your_function', 100 );
+		wp_enqueue_script( $this->plugin_name . '-barba-core', plugin_dir_url( __FILE__ ) . 'js/barba.js', array(), $this->version, true );
 	}
 
 }
