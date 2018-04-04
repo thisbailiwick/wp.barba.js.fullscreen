@@ -1,0 +1,14 @@
+{
+  "name": "barba-full-screen",
+  "version": "0.0.1",
+  "dependencies": {},
+  "devDependencies": {
+    "browserify": "^14.5.0",
+    "fscreen": "^1.0.2",
+    "gulp": "^3.9.1",
+    "gulp-sourcemaps": "^2.6.1",
+    "gulp-util": "^3.0.8",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
