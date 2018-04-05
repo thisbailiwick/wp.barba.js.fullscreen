@@ -16,7 +16,7 @@ License: GPLv2 or later
 
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-A WordPress plugin implementing [barba.fullscreen.js](https://github.com/thisbailiwick/barba.fullscreen.js)
+A WordPress plugin implementing [barba.js.fullscreen](https://github.com/thisbailiwick/barba.js.fullscreen)
 
 == Description ==
 
@@ -24,7 +24,7 @@ A WordPress plugin implementing [barba.fullscreen.js](https://github.com/thisbai
 
 [barba.js](https://github.com/luruke/barba.js)
 
-[barba.fullscreen.js](https://github.com/thisbailiwick/barba.fullscreen.js)
+[barba.js.fullscreen](https://github.com/thisbailiwick/barba.js.fullscreen)
 
 [WordPress-Plugin-Boilerplate](https://github.com/devinvinson/WordPress-Plugin-Boilerplate/)
 
