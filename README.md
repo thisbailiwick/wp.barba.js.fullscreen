@@ -2,8 +2,6 @@
 
 Contributors: thisbailiwick
 
-Donate link: http://thisbailiwick.com
-
 Tags: fullscreen
 
 Requires at least: 3.0.1
