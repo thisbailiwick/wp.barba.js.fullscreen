@@ -173,8 +173,6 @@ class Barba_Full_Screen {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
-		$this->loader->add_action('wp_footer', $plugin_public, 'footer_actions');
-
 	}
 
 	/**
