@@ -801,7 +801,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param  {Object} newObject
 	   * @return {Object} newInheritObject
 	   */
-	  extend: function(obj) {
+	  extend: function(obj){
 	    return Utils.extend(this, obj);
 	  },
 	
@@ -852,9 +852,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @memberOf Barba.BaseTransition
 	   * @abstract
 	   */
-	  start: function() {
-	  }
-	}
+	  start: function() {},
+	};
 	
 	module.exports = BaseTransition;
 
@@ -863,7 +862,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 6 */
 /***/ (function(module, exports) {
 
-	// var Jump = require('jump.js');
 	/**
 	 * Just an object with some helpful functions
 	 *
@@ -879,9 +877,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	   */
 	  getCurrentUrl: function() {
 	    return window.location.protocol + '//' +
-	      window.location.host +
-	      window.location.pathname +
-	      window.location.search;
+	           window.location.host +
+	           window.location.pathname +
+	           window.location.search;
 	  },
 	
 	  /**
@@ -917,8 +915,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var req = new XMLHttpRequest();
 	
 	    req.onreadystatechange = function() {
-	      if(req.readyState === 4) {
-	        if(req.status === 200) {
+	      if (req.readyState === 4) {
+	        if (req.status === 200) {
 	          return deferred.resolve(req.responseText);
 	        } else {
 	          return deferred.reject(new Error('xhr: HTTP code is not 200'));
@@ -989,13 +987,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var port = typeof p !== 'undefined' ? p : window.location.port;
 	    var protocol = window.location.protocol;
 	
-	    if(port != '')
+	    if (port != '')
 	      return parseInt(port);
 	
-	    if(protocol === 'http:')
+	    if (protocol === 'http:')
 	      return 80;
 	
-	    if(protocol === 'https:')
+	    if (protocol === 'https:')
 	      return 443;
 	  }
 	};
@@ -1018,7 +1016,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @namespace Barba.BaseView
 	 * @type {Object}
 	 */
-	var BaseView = {
+	var BaseView  = {
 	  /**
 	   * Namespace of the view.
 	   * (need to be associated with the data-namespace of the container)
@@ -1035,7 +1033,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param  {Object} newObject
 	   * @return {Object} newInheritObject
 	   */
-	  extend: function(obj) {
+	  extend: function(obj){
 	    return Utils.extend(this, obj);
 	  },
 	
@@ -1052,7 +1050,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    Dispatcher.on('initStateChange',
 	      function(newStatus, oldStatus) {
-	        if(oldStatus && oldStatus.namespace === _this.namespace)
+	        if (oldStatus && oldStatus.namespace === _this.namespace)
 	          _this.onLeave();
 	      }
 	    );
@@ -1061,17 +1059,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	      function(newStatus, oldStatus, container) {
 	        _this.container = container;
 	
-	        if(newStatus.namespace === _this.namespace)
+	        if (newStatus.namespace === _this.namespace)
 	          _this.onEnter();
 	      }
 	    );
 	
 	    Dispatcher.on('transitionCompleted',
 	      function(newStatus, oldStatus) {
-	        if(newStatus.namespace === _this.namespace)
+	        if (newStatus.namespace === _this.namespace)
 	          _this.onEnterCompleted();
 	
-	        if(oldStatus && oldStatus.namespace === _this.namespace)
+	        if (oldStatus && oldStatus.namespace === _this.namespace)
 	          _this.onLeaveCompleted();
 	
 	        if(HistoryManager.queued_url.length > 0) {
@@ -1085,15 +1083,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    );
 	  },
 	
-	  /**
-	   * This function will be fired when the container
-	   * is ready and attached to the DOM.
-	   *
-	   * @memberOf Barba.BaseView
-	   * @abstract
-	   */
-	  onEnter: function() {
-	  },
+	 /**
+	  * This function will be fired when the container
+	  * is ready and attached to the DOM.
+	  *
+	  * @memberOf Barba.BaseView
+	  * @abstract
+	  */
+	  onEnter: function() {},
 	
 	  /**
 	   * This function will be fired when the transition
@@ -1102,8 +1099,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @memberOf Barba.BaseView
 	   * @abstract
 	   */
-	  onEnterCompleted: function() {
-	  },
+	  onEnterCompleted: function() {},
 	
 	  /**
 	   * This function will be fired when the transition
@@ -1112,8 +1108,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @memberOf Barba.BaseView
 	   * @abstract
 	   */
-	  onLeave: function() {
-	  },
+	  onLeave: function() {},
 	
 	  /**
 	   * This function will be fired when the container
@@ -1122,9 +1117,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @memberOf Barba.BaseView
 	   * @abstract
 	   */
-	  onLeaveCompleted: function() {
-	  }
-	};
+	  onLeaveCompleted: function() {}
+	}
 	
 	module.exports = BaseView;
 
@@ -1262,14 +1256,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var currentMenuItemId = Dom.getCurrentMenuItem();
 	    var yOffset = isFullScreen ? document.getElementById('wrapper').getBoundingClientRect().top : window.scrollY;
 	
-	    if(!namespace)
+	    if (!namespace)
 	      namespace = undefined;
 	
 	    if(!pageTitle)
 	      pageTitle = undefined;
 	
 	    var urlObject = {
-	      url:            url,
+	      url: url,
 	      namespace:      namespace,
 	      pageTitle:      pageTitle,
 	      scrollPosition: yOffset
@@ -1328,7 +1322,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  prevStatus: function() {
 	    var history = this.history;
 	
-	    if(history.length < 2)
+	    if (history.length < 2)
 	      return null;
 	
 	    return history[history.length - 2];
@@ -1357,43 +1351,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @type {Object}
 	 */
 	var Dom = {
-	    /**
-	     * The name of the data attribute on the container
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @type {String}
-	     * @default
-	     */
-	    dataNamespace: 'namespace',
+	  /**
+	   * The name of the data attribute on the container
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @type {String}
+	   * @default
+	   */
+	  dataNamespace: 'namespace',
 	
-	    /**
-	     * Id of the main wrapper
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @type {String}
-	     * @default
-	     */
-	    wrapperId: 'barba-wrapper',
+	  /**
+	   * Id of the main wrapper
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @type {String}
+	   * @default
+	   */
+	  wrapperId: 'barba-wrapper',
 	
-	    /**
-	     * Class name used to identify the containers
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @type {String}
-	     * @default
-	     */
-	    containerClass: 'barba-container',
+	  /**
+	   * Class name used to identify the containers
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @type {String}
+	   * @default
+	   */
+	  containerClass: 'barba-container',
 	
-	    /**
-	     * Full HTML String of the current page.
-	     * By default is the innerHTML of the initial loaded page.
-	     *
-	     * Each time a new page is loaded, the value is the response of the xhr call.
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @type {String}
-	     */
-	    currentHTML: document.documentElement.innerHTML,
+	  /**
+	   * Full HTML String of the current page.
+	   * By default is the innerHTML of the initial loaded page.
+	   *
+	   * Each time a new page is loaded, the value is the response of the xhr call.
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @type {String}
+	   */
+	  currentHTML: document.documentElement.innerHTML,
 	
 	    /**
 	     * Classes added to body tag on the current page
@@ -1405,31 +1399,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    currentBodyClasses: '',
 	
-	    /**
-	     * Parse the responseText obtained from the xhr call
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @private
-	     * @param  {String} responseText
-	     * @return {HTMLElement}
-	     */
-	    parseResponse: function(responseText) {
-	      this.currentHTML = responseText;
+	  /**
+	   * Parse the responseText obtained from the xhr call
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @private
+	   * @param  {String} responseText
+	   * @return {HTMLElement}
+	   */
+	  parseResponse: function(responseText) {
+	    this.currentHTML = responseText;
 	
-	      var wrapper = document.createElement('div');
-	      wrapper.innerHTML = responseText;
+	    var wrapper = document.createElement('div');
+	    wrapper.innerHTML = responseText;
 	
-	      var titleEl = wrapper.querySelector('title');
+	    var titleEl = wrapper.querySelector('title');
 	
 	      this.replaceWithNewBodyId(responseText);
 	      this.replaceWithNewBodyClasses(responseText);
 	
-	      if(titleEl)
-	        document.title = titleEl.textContent;
+	    if (titleEl)
+	      document.title = titleEl.textContent;
 	
-	
-	      return this.getContainer(wrapper);
-	    },
+	    return this.getContainer(wrapper);
+	  },
 	
 	    /**
 	     * Replace the body classes on the page with the new classes contained with the string returned from
@@ -1464,90 +1457,90 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    },
 	
-	    /**
-	     * Get the main barba wrapper by the ID `wrapperId`
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @return {HTMLElement} element
-	     */
-	    getWrapper: function() {
-	      var wrapper = document.getElementById(this.wrapperId);
+	  /**
+	   * Get the main barba wrapper by the ID `wrapperId`
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @return {HTMLElement} element
+	   */
+	  getWrapper: function() {
+	    var wrapper = document.getElementById(this.wrapperId);
 	
-	      if(!wrapper)
-	        throw new Error('Barba.js: wrapper not found!');
+	    if (!wrapper)
+	      throw new Error('Barba.js: wrapper not found!');
 	
-	      return wrapper;
-	    },
+	    return wrapper;
+	  },
 	
-	    /**
-	     * Get the container on the current DOM,
-	     * or from an HTMLElement passed via argument
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @private
-	     * @param  {HTMLElement} element
-	     * @return {HTMLElement}
-	     */
-	    getContainer: function(element) {
-	      if(!element)
-	        element = document.body;
+	  /**
+	   * Get the container on the current DOM,
+	   * or from an HTMLElement passed via argument
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @private
+	   * @param  {HTMLElement} element
+	   * @return {HTMLElement}
+	   */
+	  getContainer: function(element) {
+	    if (!element)
+	      element = document.body;
 	
-	      if(!element)
-	        throw new Error('Barba.js: DOM not ready!');
+	    if (!element)
+	      throw new Error('Barba.js: DOM not ready!');
 	
-	      var container = this.parseContainer(element);
+	    var container = this.parseContainer(element);
 	
-	      if(container && container.jquery)
-	        container = container[0];
+	    if (container && container.jquery)
+	      container = container[0];
 	
-	      if(!container)
-	        throw new Error('Barba.js: no container found');
+	    if (!container)
+	      throw new Error('Barba.js: no container found');
 	
-	      return container;
-	    },
+	    return container;
+	  },
 	
-	    /**
-	     * Get the namespace of the container
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @private
-	     * @param  {HTMLElement} element
-	     * @return {String}
-	     */
-	    getNamespace: function(element) {
-	      if(element && element.dataset) {
-	        return element.dataset[this.dataNamespace];
-	      } else if(element) {
-	        return element.getAttribute('data-' + this.dataNamespace);
-	      }
+	  /**
+	   * Get the namespace of the container
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @private
+	   * @param  {HTMLElement} element
+	   * @return {String}
+	   */
+	  getNamespace: function(element) {
+	    if (element && element.dataset) {
+	      return element.dataset[this.dataNamespace];
+	    } else if (element) {
+	      return element.getAttribute('data-' + this.dataNamespace);
+	    }
 	
-	      return null;
-	    },
+	    return null;
+	  },
 	
-	    /**
-	     * Put the container on the page
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @private
-	     * @param  {HTMLElement} element
-	     */
-	    putContainer: function(element) {
-	      element.style.visibility = 'hidden';
+	  /**
+	   * Put the container on the page
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @private
+	   * @param  {HTMLElement} element
+	   */
+	  putContainer: function(element) {
+	    element.style.visibility = 'hidden';
 	
-	      var wrapper = this.getWrapper();
-	      wrapper.appendChild(element);
-	    },
+	    var wrapper = this.getWrapper();
+	    wrapper.appendChild(element);
+	  },
 	
-	    /**
-	     * Get container selector
-	     *
-	     * @memberOf Barba.Pjax.Dom
-	     * @private
-	     * @param  {HTMLElement} element
-	     * @return {HTMLElement} element
-	     */
-	    parseContainer: function(element) {
-	      return element.querySelector('.' + this.containerClass);
+	  /**
+	   * Get container selector
+	   *
+	   * @memberOf Barba.Pjax.Dom
+	   * @private
+	   * @param  {HTMLElement} element
+	   * @return {HTMLElement} element
+	   */
+	  parseContainer: function(element) {
+	    return element.querySelector('.' + this.containerClass);
 	    },
 	
 	    /**
@@ -1606,7 +1599,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var pageId = document.getElementsByTagName('body')[0].id.trim();
 	      if(pageId !== '') {
 	        pageId = pageId.match(/\d+$/)[0];
-	      }
+	  }
 	
 	      return pageId;
 	    }
@@ -1724,6 +1717,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Dispatcher = __webpack_require__(8);
 	var HideShowTransition = __webpack_require__(14);
 	var BaseCache = __webpack_require__(23);
+	
 	var HistoryManager = __webpack_require__(9);
 	var Dom = __webpack_require__(10);
 	
@@ -1735,9 +1729,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @type {Object}
 	 */
 	var Pjax = {
-	  Dom:     Dom,
+	  Dom: Dom,
 	  History: HistoryManager,
-	  Cache:   BaseCache,
+	  Cache: BaseCache,
 	
 	  /**
 	   * Indicate wether or not use the cache
@@ -1817,11 +1811,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, pageId, currentMenuItemId);
 	
 	    //dom should already be loaded here
-		  console.log('adding toggle event');
-	    document.querySelector('.fullscreen-toggle').addEventListener('click', function(e) {
-	      e.preventDefault();
-	      Fscreen.default.requestFullscreen(document.getElementById('page'));
-	    });
+		  if(Fscreen.default.fullscreenEnabled){
+	      document.querySelector('.fullscreen-toggle').addEventListener('click', function(e) {
+	        e.preventDefault();
+	        Fscreen.default.requestFullscreen(document.querySelector('.fullscreen'));
+	      });
+	    }
 	  },
 	
 	  /**
@@ -1901,7 +1896,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    xhr = this.Cache.get(url);
 	
-	    if(!xhr) {
+	    if (!xhr) {
 	      xhr = Utils.xhr(url);
 	      this.Cache.set(url, xhr);
 	    }
@@ -1912,7 +1907,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        _this.Dom.putContainer(container);
 	
-	        if(!_this.cacheEnabled)
+	        if (!_this.cacheEnabled)
 	          _this.Cache.reset();
 	
 	        deferred.resolve(container);
@@ -1938,15 +1933,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @return {String} href
 	   */
 	  getHref: function(el) {
-	    if(!el) {
+	    if (!el) {
 	      return undefined;
 	    }
 	
-	    if(el.getAttribute && typeof el.getAttribute('xlink:href') === 'string') {
+	    if (el.getAttribute && typeof el.getAttribute('xlink:href') === 'string') {
 	      return el.getAttribute('xlink:href');
 	    }
 	
-	    if(typeof el.href === 'string') {
+	    if (typeof el.href === 'string') {
 	      return el.href;
 	    }
 	
@@ -1966,7 +1961,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    //Go up in the nodelist until we
 	    //find something with an href
-	    while(el && !this.getHref(el)) {
+	    while (el && !this.getHref(el)) {
 	      el = el.parentNode;
 	    }
 	    if(el !== null) {
@@ -1976,16 +1971,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // do nothing
 	        evt.preventDefault();
 	      } else if(preventCheckResult) {
-	        evt.stopPropagation();
-	        evt.preventDefault();
+	      evt.stopPropagation();
+	      evt.preventDefault();
 	
-	        Dispatcher.trigger('linkClicked', el, evt);
+	      Dispatcher.trigger('linkClicked', el, evt);
 	
-	        var href = this.getHref(el);
+	      var href = this.getHref(el);
 	
 	
 	        if(!FullScreen.fullscreenElement()) {
-	          this.goTo(href);
+	      this.goTo(href);
 	        } else {
 	          this.onStateChange(href);
 	        }
@@ -2002,32 +1997,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @return {Boolean}
 	   */
 	  preventCheck: function(evt, element) {
-	    if(!window.history.pushState)
+	    if (!window.history.pushState)
 	      return false;
 	
-	    var FullScreen = __webpack_require__(11);
 	    var href = this.getHref(element);
 	    var cleanHref = Utils.cleanLink(href);
 	    var same_page = cleanHref === Utils.cleanLink(location.href);
 	
 	    //User
-	    if(!element || !href)
+	    if (!element || !href)
 	      return false;
 	
 	    //Middle click, cmd click, and ctrl click
-	    if(evt.which > 1 || evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.altKey)
+	    if (evt.which > 1 || evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.altKey)
 	      return false;
 	
 	    //Ignore target with _blank target
-	    if(element.target && element.target === '_blank')
+	    if (element.target && element.target === '_blank')
 	      return false;
 	
 	    //Check if it's the same domain
-	    if(window.location.protocol !== element.protocol || window.location.hostname !== element.hostname)
+	    if (window.location.protocol !== element.protocol || window.location.hostname !== element.hostname)
 	      return false;
 	
 	    //Check if the port is the same
-	    if(Utils.getPort() !== Utils.getPort(element.port))
+	    if (Utils.getPort() !== Utils.getPort(element.port))
 	      return false;
 	
 	    //Ignore case when a hash is being tacked on the current URL
@@ -2035,7 +2029,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return false;
 	
 	    //Ignore case where there is download attribute
-	    if(element.getAttribute && typeof element.getAttribute('download') === 'string')
+	    if (element.getAttribute && typeof element.getAttribute('download') === 'string')
 	      return false;
 	
 	    //In case you're trying to load the same page
@@ -2087,12 +2081,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 	
-	    if(this.History.currentStatus().url === newUrl)
+	    if (this.History.currentStatus().url === newUrl)
 	      return false;
 	
 	    var newContainer = this.load(newUrl);
 	    this.History.add(newUrl, null, document.querySelector('title').textContent);
 	    var transition = Object.create(this.getTransition());
+	
 	    this.transitionProgress = true;
 	
 	    Dispatcher.trigger('initStateChange',
@@ -2243,7 +2238,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	
 	  fullscreenSetScrollPosition: function (scrollTop) {
-	    ScrollToElement('#full-screen', {
+	    ScrollToElement('.fullscreen', {
 	      offset: scrollTop,
 	      ease: 'out-bounce',
 	      duration: 1500
