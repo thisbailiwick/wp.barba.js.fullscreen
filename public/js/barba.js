@@ -64,13 +64,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  version: '1.0.0',
 	  BaseTransition: __webpack_require__(5),
 	  BaseView: __webpack_require__(7),
-	  BaseCache: __webpack_require__(23),
+	  BaseCache: __webpack_require__(24),
 	  Dispatcher: __webpack_require__(8),
 	  Fscreen: __webpack_require__(12),
 	  FullScreen: __webpack_require__(11),
 	  HistoryManager: __webpack_require__(9),
-	  Pjax: __webpack_require__(13),
-	  Prefetch: __webpack_require__(24),
+	  Pjax: __webpack_require__(14),
+	  Prefetch: __webpack_require__(25),
 	  Utils: __webpack_require__(6)
 	};
 	
@@ -1008,7 +1008,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Dispatcher = __webpack_require__(8);
 	var Utils = __webpack_require__(6);
 	var HistoryManager = __webpack_require__(9);
-	var Pjax = __webpack_require__(13);
+	var Pjax = __webpack_require__(14);
 	
 	/**
 	 * BaseView to be extended
@@ -1254,7 +1254,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var isFullScreen = FullScreen.fullscreenElement();
 	    var pageId = Dom.getPageId();
 	    var currentMenuItemId = Dom.getCurrentMenuItem();
-	    var yOffset = isFullScreen ? document.getElementById('wrapper').getBoundingClientRect().top : window.scrollY;
+	    var yOffset = isFullScreen ? document.querySelector('.fullscreen-wrapper').getBoundingClientRect().top : window.scrollY;
 	
 	    if (!namespace)
 	      namespace = undefined;
@@ -1615,6 +1615,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var Fscreen = __webpack_require__(12);
 	var Dom = __webpack_require__(10);
+	var Cookies = __webpack_require__(13);
 	
 	/**
 	 * Implements fscreen for fullscreen functionalities
@@ -1624,20 +1625,151 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	
 	var FullScreen = {
-	  currentUrl:              null,
+	  currentUrl: null,
+		preference: false,
+	  modal: null,
+	  isFullscreen: false,
 	  fullscreenElement:       function() {
 	    return Fscreen.default.fullscreenElement !== null;
 	  },
 	  fullScreenOnChangeEvent: function() {
-	
+	    this.isFullscreen = !this.isFullscreen;
 	  },
+		initFullScreen: function(options){
+			//dom should already be loaded here
+			if(Fscreen.default.fullscreenEnabled){
+				document.querySelector('body').classList.add('fullscreen-capable');
+				this.setFullScreenToggle();
+				this.preference = options.showFullscreenModal
+				this.initFullscreenModal();
+			}else{
+				//browser is not capable
+				document.querySelector('.fullscreen-toggle').style.display = 'none';
+			}
+		},
+		setFullScreenToggle: function(){
+			document.querySelector('.fullscreen-toggle').addEventListener('click', function(e) {
+				e.preventDefault();
+				FullScreen.goFullScreen();
+			});
+		},
 	  replaceBodyClasses:      function() {
 	    var body = document.getElementsByTagName('body')[0];
 	    body.className = Dom.currentBodyClasses;
-	  }
+	  },
+		goFullScreen: function(){
+			Fscreen.default.requestFullscreen(document.querySelector('.fullscreen'));
+			if(this.preference === false){
+				this.preference = true;
+				this.setFullscreenYesCookies();
+			}
+		},
+		initFullscreenModal: function(){
+			if(this.preference === true){
+				FullScreen.applyFullscreenModal();
+			}
+		},
+	  applyFullscreenModal: function(){
+	    // create fullscreen modal html
+	    var modalHtml = '\
+				<style type="text/css">\
+					.fullscreen-modal{\
+		        align-items: center;\
+						background-color: rgba(255,255,255,.8);\
+						display: none;\
+						height: 100%;\
+		        justify-content: center;\
+						left: 0;\
+						position: fixed;\
+						width: 100%;\
+						text-align: center;\
+						top: 0;\
+	          z-index: 100;\
+					}\
+					\
+					.fullscreen-modal.show{\
+						display: flex;\
+					}\
+					\
+					button{\
+						\
+					}\
+					button:hover{\
+						cursor: pointer;\
+	        }\
+				</style>\
+	      <div class="fullscreen-modal">\
+	      	<div class="fullscreen-inner-wrap">\
+	      	<h3>View site in fullscreen mode?</h3>\
+	      		<button class="fullscreen-yes">Yes Please!</button>\
+	      		<button class="fullscreen-no">No thanks.</button>\
+	      	</div>\
+	    	</div>\
+	';
+	    // add hidden html to page
+		  document.querySelector('.fullscreen').insertAdjacentHTML('beforeend', modalHtml);
+	    // check if user has cookies, permanent and session
+		  var showModal = this.shouldShowModal();
+	    if(showModal){
+		    this.modal = document.querySelector('.fullscreen-modal');
+		    var buttonYes = this.modal.querySelector('.fullscreen-yes');
+		    var buttonNo = this.modal.querySelector('.fullscreen-no');
+	
+		    this.modal.classList.toggle('show');
+	
+		    this.setModalButtonEvents(buttonYes, buttonNo)
+	    }
+	  },
+		shouldShowModal: function(){
+	  	// check if session cookie
+			var sessionCookie = Cookies.get('fullscreen-session');
+			if(sessionCookie !== undefined){
+				return sessionCookie === 'true';
+			}
+	
+			// if no session cookie check for permanent cookie
+			if(sessionCookie === undefined){
+				var permanentCookie = Cookies.get('fullscreen-permanent');
+				if(permanentCookie !== undefined){
+					return permanentCookie === 'true';
+				}
+			}
+	
+			// if we get here, we show modal
+			return true;
+	
+		},
+		setModalButtonEvents: function(buttonYes, buttonNo){
+	  	buttonYes.addEventListener('click', this.fullscreenYes.bind(this) );
+	  	buttonNo.addEventListener('click', this.fullscreenNo.bind(this) );
+		},
+		fullscreenYes: function(){
+	  	//hide modal
+			this.modal.classList.toggle('show');
+			Fscreen.default.requestFullscreen(document.querySelector('.fullscreen'));
+			this.setFullscreenYesCookies();
+		},
+		fullscreenNo: function(){
+			//hide modal
+			this.modal.classList.toggle('show');
+	  	this.setFullscreenNoCookies();
+		},
+		setFullscreenYesCookies: function(){
+	  	// set permanent
+			Cookies.set('fullscreen-permanent', true, { expires: 365 });
+			// set session
+			Cookies.set('fullscreen-session', true);
+		},
+		setFullscreenNoCookies: function(){
+			// set permanent
+			Cookies.set('fullscreen-permanent', false, { expires: 365 });
+			// set session
+			Cookies.set('fullscreen-session', false);
+		}
+	
 	};
 	
-	Fscreen.default.addEventListener('fullscreenchange', FullScreen.fullScreenOnChangeEvent, false);
+	Fscreen.default.addEventListener('fullscreenchange', FullScreen.fullScreenOnChangeEvent.bind(FullScreen), false);
 	module.exports = FullScreen;
 
 
@@ -1712,11 +1844,181 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var Fscreen = __webpack_require__(12);
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
+	 * JavaScript Cookie v2.2.0
+	 * https://github.com/js-cookie/js-cookie
+	 *
+	 * Copyright 2006, 2015 Klaus Hartl & Fagner Brack
+	 * Released under the MIT license
+	 */
+	;(function (factory) {
+		var registeredInModuleLoader = false;
+		if (true) {
+			!(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+			registeredInModuleLoader = true;
+		}
+		if (true) {
+			module.exports = factory();
+			registeredInModuleLoader = true;
+		}
+		if (!registeredInModuleLoader) {
+			var OldCookies = window.Cookies;
+			var api = window.Cookies = factory();
+			api.noConflict = function () {
+				window.Cookies = OldCookies;
+				return api;
+			};
+		}
+	}(function () {
+		function extend () {
+			var i = 0;
+			var result = {};
+			for (; i < arguments.length; i++) {
+				var attributes = arguments[ i ];
+				for (var key in attributes) {
+					result[key] = attributes[key];
+				}
+			}
+			return result;
+		}
+	
+		function init (converter) {
+			function api (key, value, attributes) {
+				var result;
+				if (typeof document === 'undefined') {
+					return;
+				}
+	
+				// Write
+	
+				if (arguments.length > 1) {
+					attributes = extend({
+						path: '/'
+					}, api.defaults, attributes);
+	
+					if (typeof attributes.expires === 'number') {
+						var expires = new Date();
+						expires.setMilliseconds(expires.getMilliseconds() + attributes.expires * 864e+5);
+						attributes.expires = expires;
+					}
+	
+					// We're using "expires" because "max-age" is not supported by IE
+					attributes.expires = attributes.expires ? attributes.expires.toUTCString() : '';
+	
+					try {
+						result = JSON.stringify(value);
+						if (/^[\{\[]/.test(result)) {
+							value = result;
+						}
+					} catch (e) {}
+	
+					if (!converter.write) {
+						value = encodeURIComponent(String(value))
+							.replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
+					} else {
+						value = converter.write(value, key);
+					}
+	
+					key = encodeURIComponent(String(key));
+					key = key.replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent);
+					key = key.replace(/[\(\)]/g, escape);
+	
+					var stringifiedAttributes = '';
+	
+					for (var attributeName in attributes) {
+						if (!attributes[attributeName]) {
+							continue;
+						}
+						stringifiedAttributes += '; ' + attributeName;
+						if (attributes[attributeName] === true) {
+							continue;
+						}
+						stringifiedAttributes += '=' + attributes[attributeName];
+					}
+					return (document.cookie = key + '=' + value + stringifiedAttributes);
+				}
+	
+				// Read
+	
+				if (!key) {
+					result = {};
+				}
+	
+				// To prevent the for loop in the first place assign an empty array
+				// in case there are no cookies at all. Also prevents odd result when
+				// calling "get()"
+				var cookies = document.cookie ? document.cookie.split('; ') : [];
+				var rdecode = /(%[0-9A-Z]{2})+/g;
+				var i = 0;
+	
+				for (; i < cookies.length; i++) {
+					var parts = cookies[i].split('=');
+					var cookie = parts.slice(1).join('=');
+	
+					if (!this.json && cookie.charAt(0) === '"') {
+						cookie = cookie.slice(1, -1);
+					}
+	
+					try {
+						var name = parts[0].replace(rdecode, decodeURIComponent);
+						cookie = converter.read ?
+							converter.read(cookie, name) : converter(cookie, name) ||
+							cookie.replace(rdecode, decodeURIComponent);
+	
+						if (this.json) {
+							try {
+								cookie = JSON.parse(cookie);
+							} catch (e) {}
+						}
+	
+						if (key === name) {
+							result = cookie;
+							break;
+						}
+	
+						if (!key) {
+							result[name] = cookie;
+						}
+					} catch (e) {}
+				}
+	
+				return result;
+			}
+	
+			api.set = api;
+			api.get = function (key) {
+				return api.call(api, key);
+			};
+			api.getJSON = function () {
+				return api.apply({
+					json: true
+				}, [].slice.call(arguments));
+			};
+			api.defaults = {};
+	
+			api.remove = function (key, attributes) {
+				api(key, '', extend(attributes, {
+					expires: -1
+				}));
+			};
+	
+			api.withConverter = init;
+	
+			return api;
+		}
+	
+		return init(function () {});
+	}));
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
 	var Utils = __webpack_require__(6);
 	var Dispatcher = __webpack_require__(8);
-	var HideShowTransition = __webpack_require__(14);
-	var BaseCache = __webpack_require__(23);
+	var HideShowTransition = __webpack_require__(15);
+	var BaseCache = __webpack_require__(24);
 	
 	var HistoryManager = __webpack_require__(9);
 	var Dom = __webpack_require__(10);
@@ -1765,8 +2067,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	   *
 	   * @memberOf Barba.Pjax
 	   */
-	  start: function() {
-	    this.init();
+	  start: function(options) {
+	  	options = typeof options !== 'undefined' ? options : {};
+	  	options = {
+		    showFullscreenModal: typeof options.showFullscreenModal !== 'undefined' ? options.showFullscreenModal : false
+	    };
+	
+	    this.init(options);
 	  },
 	
 	  /**
@@ -1775,9 +2082,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @memberOf Barba.Pjax
 	   * @private
 	   */
-	  init: function() {
+	  init: function(options) {
 	    var container = this.Dom.getContainer();
 	    var wrapper = this.Dom.getWrapper();
+	    var FullScreen = __webpack_require__(11);
 	
 	    wrapper.setAttribute('aria-live', 'polite');
 	
@@ -1810,13 +2118,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      currentMenuItemId: currentMenuItemId
 	    }, pageId, currentMenuItemId);
 	
-	    //dom should already be loaded here
-		  if(Fscreen.default.fullscreenEnabled){
-	      document.querySelector('.fullscreen-toggle').addEventListener('click', function(e) {
-	        e.preventDefault();
-	        Fscreen.default.requestFullscreen(document.querySelector('.fullscreen'));
-	      });
-	    }
+	    FullScreen.initFullScreen(options);
 	  },
 	
 	  /**
@@ -2148,11 +2450,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var BaseTransition = __webpack_require__(5);
-	var ScrollToElement = __webpack_require__(15);
+	var ScrollToElement = __webpack_require__(16);
 	var HistoryManager = __webpack_require__(9);
 	var Promise = __webpack_require__(1);
 	
@@ -2185,7 +2487,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return new Promise(function (resolve, reject) {
 	      _this.fadeElementOut(_this.oldContainer).then(function () {
 	        if (HistoryManager.activePopStateEvent === false) {
-	          document.getElementById('wrapper').scrollIntoView();
+	          document.querySelector('.fullscreen-wrapper').scrollIntoView();
 	        } else if (Barba.FullScreen.fullscreenElement()) {
 	          // Here we're getting the scroll position of the next to last element in Barba.HistoryManager.history. The last element being the page we are currently on, next to last being the one we're going to (whether it's a forwards or backwards popstateevent).
 	          HideShowTransition.fullscreenSetScrollPosition(Math.abs(HistoryManager.history[HistoryManager.history.length - 2].scrollPosition));
@@ -2280,10 +2582,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var scroll = __webpack_require__(16);
+	var scroll = __webpack_require__(17);
 	
 	function calculateScrollOffset(elem, additionalOffset, alignment) {
 	  var body = document.body,
@@ -2318,15 +2620,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module dependencies.
 	 */
 	
-	var Tween = __webpack_require__(17);
-	var raf = __webpack_require__(22);
+	var Tween = __webpack_require__(18);
+	var raf = __webpack_require__(23);
 	
 	/**
 	 * Expose `scrollTo`.
@@ -2390,7 +2692,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	
@@ -2398,10 +2700,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module dependencies.
 	 */
 	
-	var Emitter = __webpack_require__(18);
-	var clone = __webpack_require__(19);
-	var type = __webpack_require__(20);
-	var ease = __webpack_require__(21);
+	var Emitter = __webpack_require__(19);
+	var clone = __webpack_require__(20);
+	var type = __webpack_require__(21);
+	var ease = __webpack_require__(22);
 	
 	/**
 	 * Expose `Tween`.
@@ -2573,7 +2875,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports) {
 
 	
@@ -2740,7 +3042,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
@@ -2749,9 +3051,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var type;
 	try {
-	  type = __webpack_require__(20);
+	  type = __webpack_require__(21);
 	} catch (_) {
-	  type = __webpack_require__(20);
+	  type = __webpack_require__(21);
 	}
 	
 	/**
@@ -2803,7 +3105,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports) {
 
 	/**
@@ -2843,7 +3145,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports) {
 
 	
@@ -3019,7 +3321,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports) {
 
 	/**
@@ -3059,7 +3361,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var Utils = __webpack_require__(6);
@@ -3127,11 +3429,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var Utils = __webpack_require__(6);
-	var Pjax = __webpack_require__(13);
+	var Pjax = __webpack_require__(14);
 	
 	/**
 	 * Prefetch
