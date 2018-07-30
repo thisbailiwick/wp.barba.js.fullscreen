@@ -63,14 +63,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Barba = {
 	  version: '1.0.0',
 	  BaseTransition: __webpack_require__(5),
-	  BaseView: __webpack_require__(7),
-	  BaseCache: __webpack_require__(24),
-	  Dispatcher: __webpack_require__(8),
-	  Fscreen: __webpack_require__(12),
-	  FullScreen: __webpack_require__(11),
-	  HistoryManager: __webpack_require__(9),
-	  Pjax: __webpack_require__(14),
-	  Prefetch: __webpack_require__(25),
+	  BaseView: __webpack_require__(13),
+	  BaseCache: __webpack_require__(26),
+	  Dispatcher: __webpack_require__(14),
+	  Fscreen: __webpack_require__(9),
+	  FullScreen: __webpack_require__(8),
+	  HistoryManager: __webpack_require__(15),
+	  Pjax: __webpack_require__(16),
+	  Prefetch: __webpack_require__(27),
 	  Utils: __webpack_require__(6)
 	};
 	
@@ -860,8 +860,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 6 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
+	var Cookies = __webpack_require__(7);
+	var FullScreen = __webpack_require__(8);
+	
 	/**
 	 * Just an object with some helpful functions
 	 *
@@ -875,11 +878,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @memberOf Barba.Utils
 	   * @return {String} currentUrl
 	   */
-	  getCurrentUrl: function() {
+	  getCurrentUrl: function () {
 	    return window.location.protocol + '//' +
-	           window.location.host +
-	           window.location.pathname +
-	           window.location.search;
+	      window.location.host +
+	      window.location.pathname +
+	      window.location.search;
 	  },
 	
 	  /**
@@ -890,7 +893,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param  {String} url
 	   * @return {String} newCleanUrl
 	   */
-	  cleanLink: function(url) {
+	  cleanLink: function (url) {
 	    return url.replace(/#.*/, '');
 	  },
 	
@@ -910,11 +913,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param  {String} url
 	   * @return {Promise}
 	   */
-	  xhr: function(url) {
+	  xhr: function (url) {
 	    var deferred = this.deferred();
 	    var req = new XMLHttpRequest();
 	
-	    req.onreadystatechange = function() {
+	    req.onreadystatechange = function () {
 	      if (req.readyState === 4) {
 	        if (req.status === 200) {
 	          return deferred.resolve(req.responseText);
@@ -924,7 +927,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    };
 	
-	    req.ontimeout = function() {
+	    req.ontimeout = function () {
 	      return deferred.reject(new Error('xhr: Timeout exceeded'));
 	    };
 	
@@ -944,11 +947,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param  {object} props
 	   * @return {object}
 	   */
-	  extend: function(obj, props) {
+	  extend: function (obj, props) {
 	    var newObj = Object.create(obj);
 	
-	    for(var prop in props) {
-	      if(props.hasOwnProperty(prop)) {
+	    for (var prop in props) {
+	      if (props.hasOwnProperty(prop)) {
 	        newObj[prop] = props[prop];
 	      }
 	    }
@@ -963,12 +966,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @memberOf Barba.Utils
 	   * @return {Deferred}
 	   */
-	  deferred: function() {
-	    return new function() {
+	  deferred: function () {
+	    return new function () {
 	      this.resolve = null;
 	      this.reject = null;
 	
-	      this.promise = new Promise(function(resolve, reject) {
+	      this.promise = new Promise(function (resolve, reject) {
 	        this.resolve = resolve;
 	        this.reject = reject;
 	      }.bind(this));
@@ -983,8 +986,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param  {String} p
 	   * @return {Int} port
 	   */
-	  getPort: function(p) {
-	    var port = typeof p !== 'undefined' ? p : window.location.port;
+	  getPort: function (p) {
+	    var port = typeof p !== 'undefined'
+	      ? p
+	      : window.location.port;
 	    var protocol = window.location.protocol;
 	
 	    if (port != '')
@@ -995,6 +1000,95 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    if (protocol === 'https:')
 	      return 443;
+	  },
+	
+	  /**
+	   * Get the paramater/query of a url by name
+	   *
+	   * @memberOf Barba.Utils
+	   * @private
+	   * @param  {String} name
+	   * @param  {String} url
+	   * @return {String} value
+	   */
+	  getParameterByName: function (name, url) {
+	    name = name.replace(/[\[\]]/g, "\\$&");
+	    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+	      results = regex.exec(url);
+	    if (!results) return null;
+	    if (!results[2]) return '';
+	    return decodeURIComponent(results[2].replace(/\+/g, " "));
+	  },
+	
+	  /**
+	   * Check to see if url has query added to set cookie
+	   *
+	   * @memberOf Barba.Utils
+	   * @private
+	   * @param  {String} query name
+	   * @return {String} url
+	   */
+	  urlCookieSetCheck: function (url) {
+	    var results = this.getParameterByName('cookie', url);
+	    if (results !== '' || results !== null) {
+	      Cookies.set(results, true, {expires: 365});
+	    }
+	  },
+	
+	  getElementTop: function (element) {
+	    var top = 0;
+	    do {
+	      top += element.offsetTop || 0;
+	      element = element.offsetParent;
+	    } while (element);
+	    return top;
+	  },
+	
+	  getElementMiddle: function (element) {
+	
+	    var elementHeight = element.clientHeight;
+	    var top = this.getElementTop(element);
+	
+	    var scrollingWrapHeight = null;
+	    /* eslint-disable */
+	    if (FullScreen.isFullscreen) {
+	      /* eslint-enable */
+	      // use fullscreen
+	      scrollingWrapHeight = FullScreen.fullscreenElement.clientHeight;
+	    } else {
+	      // use window
+	      scrollingWrapHeight = window.innerHeight;
+	    }
+	
+	    return top - ((scrollingWrapHeight - elementHeight) / 2);
+	
+	  },
+	
+	  scrollToByPixels: function (scrollAmount) {
+	    if (FullScreen.isFullscreen) {
+	      FullScreen.fullscreenElement.scrollTo({top: scrollAmount, left: 0, behavior: 'smooth'});
+	    } else {
+	      window.scrollTo({top: scrollAmount, left: 0, behavior: 'smooth'});
+	    }
+	  },
+	
+	  /**
+	   * Scroll to an elements top or middle
+	   *
+	   * @memberOf Barba.Utils
+	   * @private
+	   * @param  {Dom Element} element
+	   * @param  {Boolean} middle
+	   *
+	   */
+	  scrollToElement: function (element, middle) {
+	    var scrollAmount = 0;
+	    if(middle === true){
+	      scrollAmount = this.getElementMiddle(element);
+	    }else{
+	      scrollAmount = this.getElementTop(element);
+	    }
+	    this.scrollToByPixels(scrollAmount);
 	  }
 	};
 	
@@ -1005,340 +1099,492 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var Dispatcher = __webpack_require__(8);
-	var Utils = __webpack_require__(6);
-	var HistoryManager = __webpack_require__(9);
-	var Pjax = __webpack_require__(14);
-	
-	/**
-	 * BaseView to be extended
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
+	 * JavaScript Cookie v2.2.0
+	 * https://github.com/js-cookie/js-cookie
 	 *
-	 * @namespace Barba.BaseView
-	 * @type {Object}
+	 * Copyright 2006, 2015 Klaus Hartl & Fagner Brack
+	 * Released under the MIT license
 	 */
-	var BaseView  = {
-	  /**
-	   * Namespace of the view.
-	   * (need to be associated with the data-namespace of the container)
-	   *
-	   * @memberOf Barba.BaseView
-	   * @type {String}
-	   */
-	  namespace: null,
+	;(function (factory) {
+		var registeredInModuleLoader = false;
+		if (true) {
+			!(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+			registeredInModuleLoader = true;
+		}
+		if (true) {
+			module.exports = factory();
+			registeredInModuleLoader = true;
+		}
+		if (!registeredInModuleLoader) {
+			var OldCookies = window.Cookies;
+			var api = window.Cookies = factory();
+			api.noConflict = function () {
+				window.Cookies = OldCookies;
+				return api;
+			};
+		}
+	}(function () {
+		function extend () {
+			var i = 0;
+			var result = {};
+			for (; i < arguments.length; i++) {
+				var attributes = arguments[ i ];
+				for (var key in attributes) {
+					result[key] = attributes[key];
+				}
+			}
+			return result;
+		}
 	
-	  /**
-	   * Helper to extend the object
-	   *
-	   * @memberOf Barba.BaseView
-	   * @param  {Object} newObject
-	   * @return {Object} newInheritObject
-	   */
-	  extend: function(obj){
-	    return Utils.extend(this, obj);
-	  },
+		function init (converter) {
+			function api (key, value, attributes) {
+				var result;
+				if (typeof document === 'undefined') {
+					return;
+				}
 	
-	  /**
-	   * Init the view.
-	   * P.S. Is suggested to init the view before starting Barba.Pjax.start(),
-	   * in this way .onEnter() and .onEnterCompleted() will be fired for the current
-	   * container when the page is loaded.
-	   *
-	   * @memberOf Barba.BaseView
-	   */
-	  init: function() {
-	    var _this = this;
+				// Write
 	
-	    Dispatcher.on('initStateChange',
-	      function(newStatus, oldStatus) {
-	        if (oldStatus && oldStatus.namespace === _this.namespace)
-	          _this.onLeave();
-	      }
-	    );
+				if (arguments.length > 1) {
+					attributes = extend({
+						path: '/'
+					}, api.defaults, attributes);
 	
-	    Dispatcher.on('newPageReady',
-	      function(newStatus, oldStatus, container) {
-	        _this.container = container;
+					if (typeof attributes.expires === 'number') {
+						var expires = new Date();
+						expires.setMilliseconds(expires.getMilliseconds() + attributes.expires * 864e+5);
+						attributes.expires = expires;
+					}
 	
-	        if (newStatus.namespace === _this.namespace)
-	          _this.onEnter();
-	      }
-	    );
+					// We're using "expires" because "max-age" is not supported by IE
+					attributes.expires = attributes.expires ? attributes.expires.toUTCString() : '';
 	
-	    Dispatcher.on('transitionCompleted',
-	      function(newStatus, oldStatus) {
-	        if (newStatus.namespace === _this.namespace)
-	          _this.onEnterCompleted();
+					try {
+						result = JSON.stringify(value);
+						if (/^[\{\[]/.test(result)) {
+							value = result;
+						}
+					} catch (e) {}
 	
-	        if (oldStatus && oldStatus.namespace === _this.namespace)
-	          _this.onLeaveCompleted();
+					if (!converter.write) {
+						value = encodeURIComponent(String(value))
+							.replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
+					} else {
+						value = converter.write(value, key);
+					}
 	
-	        if(HistoryManager.queued_url.length > 0) {
-	          // if a url made it to the queue list then it already passed the prevent check process
+					key = encodeURIComponent(String(key));
+					key = key.replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent);
+					key = key.replace(/[\(\)]/g, escape);
 	
-	          var newUrl = HistoryManager.queued_url[0];
-	          HistoryManager.queued_url = [];
-	          Pjax.goTo(newUrl);
-	        }
-	      }
-	    );
-	  },
+					var stringifiedAttributes = '';
 	
-	 /**
-	  * This function will be fired when the container
-	  * is ready and attached to the DOM.
-	  *
-	  * @memberOf Barba.BaseView
-	  * @abstract
-	  */
-	  onEnter: function() {},
+					for (var attributeName in attributes) {
+						if (!attributes[attributeName]) {
+							continue;
+						}
+						stringifiedAttributes += '; ' + attributeName;
+						if (attributes[attributeName] === true) {
+							continue;
+						}
+						stringifiedAttributes += '=' + attributes[attributeName];
+					}
+					return (document.cookie = key + '=' + value + stringifiedAttributes);
+				}
 	
-	  /**
-	   * This function will be fired when the transition
-	   * to this container has just finished.
-	   *
-	   * @memberOf Barba.BaseView
-	   * @abstract
-	   */
-	  onEnterCompleted: function() {},
+				// Read
 	
-	  /**
-	   * This function will be fired when the transition
-	   * to a new container has just started.
-	   *
-	   * @memberOf Barba.BaseView
-	   * @abstract
-	   */
-	  onLeave: function() {},
+				if (!key) {
+					result = {};
+				}
 	
-	  /**
-	   * This function will be fired when the container
-	   * has just been removed from the DOM.
-	   *
-	   * @memberOf Barba.BaseView
-	   * @abstract
-	   */
-	  onLeaveCompleted: function() {}
-	}
+				// To prevent the for loop in the first place assign an empty array
+				// in case there are no cookies at all. Also prevents odd result when
+				// calling "get()"
+				var cookies = document.cookie ? document.cookie.split('; ') : [];
+				var rdecode = /(%[0-9A-Z]{2})+/g;
+				var i = 0;
 	
-	module.exports = BaseView;
+				for (; i < cookies.length; i++) {
+					var parts = cookies[i].split('=');
+					var cookie = parts.slice(1).join('=');
+	
+					if (!this.json && cookie.charAt(0) === '"') {
+						cookie = cookie.slice(1, -1);
+					}
+	
+					try {
+						var name = parts[0].replace(rdecode, decodeURIComponent);
+						cookie = converter.read ?
+							converter.read(cookie, name) : converter(cookie, name) ||
+							cookie.replace(rdecode, decodeURIComponent);
+	
+						if (this.json) {
+							try {
+								cookie = JSON.parse(cookie);
+							} catch (e) {}
+						}
+	
+						if (key === name) {
+							result = cookie;
+							break;
+						}
+	
+						if (!key) {
+							result[name] = cookie;
+						}
+					} catch (e) {}
+				}
+	
+				return result;
+			}
+	
+			api.set = api;
+			api.get = function (key) {
+				return api.call(api, key);
+			};
+			api.getJSON = function () {
+				return api.apply({
+					json: true
+				}, [].slice.call(arguments));
+			};
+			api.defaults = {};
+	
+			api.remove = function (key, attributes) {
+				api(key, '', extend(attributes, {
+					expires: -1
+				}));
+			};
+	
+			api.withConverter = init;
+	
+			return api;
+		}
+	
+		return init(function () {});
+	}));
 
 
 /***/ }),
 /* 8 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
+	var Fscreen = __webpack_require__(9);
+	var Dom = __webpack_require__(10);
+	var Cookies = __webpack_require__(7);
+	var CustomEvent = __webpack_require__(11);
+	var smoothscroll = __webpack_require__(12);
+	// var Utils = require('./Utils');
+	
 	/**
-	 * Little Dispatcher inspired by MicroEvent.js
+	 * Implements fscreen for fullscreen functionalities
 	 *
-	 * @namespace Barba.Dispatcher
 	 * @type {Object}
+	 * @namespace Barba.FullScreen
 	 */
-	var Dispatcher = {
-	  /**
-	   * Object that keeps all the events
-	   *
-	   * @memberOf Barba.Dispatcher
-	   * @readOnly
-	   * @type {Object}
-	   */
-	  events: {},
 	
-	  /**
-	   * Bind a callback to an event
-	   *
-	   * @memberOf Barba.Dispatcher
-	   * @param  {String} eventName
-	   * @param  {Function} function
-	   */
-	  on: function(e, f) {
-	    this.events[e] = this.events[e] || [];
-	    this.events[e].push(f);
-	  },
+	var FullScreen = {
+	  currentUrl: null,
+	  // use modal
+	  preference: false,
+	  // use manual calling of modal
+	  modal: null,
+	  isFullscreen: false,
+	  fullScreenChangeEvent: new CustomEvent('fullscreenChange'),
+	  browserSupportsFullscreen: false,
+	  scrollToElement: null,
+	  fullscreenElement: document.querySelector('.fullscreen'),
+	  fullScreenOnChangeEvent: function () {
+	    this.isFullscreen = !this.isFullscreen;
 	
-	  /**
-	   * Unbind event
-	   *
-	   * @memberOf Barba.Dispatcher
-	   * @param  {String} eventName
-	   * @param  {Function} function
-	   */
-	  off: function(e, f) {
-	    if(e in this.events === false)
-	      return;
-	
-	    this.events[e].splice(this.events[e].indexOf(f), 1);
-	  },
-	
-	  /**
-	   * Fire the event running all the event associated to it
-	   *
-	   * @memberOf Barba.Dispatcher
-	   * @param  {String} eventName
-	   * @param  {...*} args
-	   */
-	  trigger: function(e) {//e, ...args
-	    if (e in this.events === false)
-	      return;
-	
-	    for(var i = 0; i < this.events[e].length; i++){
-	      this.events[e][i].apply(this, Array.prototype.slice.call(arguments, 1));
+	    if (this.scrollToElement !== null) {
+	      Barba.Utils.scrollToElement(this.scrollToElement, false);
+	      this.scrollToElement = null;
 	    }
+	
+	    document.dispatchEvent(
+	      new CustomEvent('barbaFullscreenOnChange', {
+	        bubbles: false,
+	        cancelable: false
+	      })
+	    );
+	  },
+	  initFullScreen: function (options) {
+	    //dom should already be loaded here
+	    smoothscroll.polyfill();
+	    if (Fscreen.default.fullscreenEnabled) {
+	      this.browserSupportsFullscreen = true;
+	      document.querySelector('body').classList.add('fullscreen-capable');
+	      this.setFullScreenToggle();
+	      this.preference = options.showFullscreenModal;
+	      if (this.preference === true) {
+	        this.manualModal = options.manualModal;
+	        this.manualFullScreenToggle = options.manualFullScreenToggle;
+	      }
+	      this.initFullscreenModal();
+	
+	      Fscreen.default.addEventListener('fullscreenchange', FullScreen.fullScreenOnChangeEvent.bind(FullScreen), false);
+	    } else {
+	      //browser is not capable
+	      document.querySelector('.fullscreen-toggle').style.display = 'none';
+	      document.querySelector('body').classList.add('no-fullscreen');
+	    }
+	  },
+	  setFullScreenToggle: function () {
+	    document.querySelector('.fullscreen-toggle').addEventListener('click', function (e) {
+	      e.preventDefault();
+	      if (FullScreen.isFullscreen) {
+	        Fscreen.default.exitFullscreen();
+	      } else {
+	        FullScreen.goFullScreen();
+	      }
+	    });
+	  },
+	
+	  replaceBodyClasses: function () {
+	    var body = document.getElementsByTagName('body')[0];
+	    var additional_classes = '';
+	    if (FullScreen.browserSupportsFullscreen === false) {
+	      additional_classes = ' no-fullscreen'
+	    }
+	    body.className = Dom.currentBodyClasses + additional_classes;
+	  },
+	
+	  // all fullscreen requests should go through this function
+	  goFullScreen: function () {
+	    this.enterFullScreen();
+	    if (this.preference === false) {
+	      this.preference = true;
+	      this.setFullscreenYesCookies();
+	    }
+	  },
+	
+	  initFullscreenModal: function () {
+	    if (this.preference === true) {
+	      FullScreen.applyFullscreenModal();
+	    }
+	  },
+	
+	  toggleModal: function () {
+	    this.modal.classList.toggle('show');
+	  },
+	
+	  showModal: function () {
+	    this.modal = document.querySelector('.fullscreen-modal');
+	    var buttonYes = this.modal.querySelector('.fullscreen-yes');
+	    var buttonNo = this.modal.querySelector('.fullscreen-no');
+	
+	    this.toggleModal();
+	
+	    this.setModalButtonEvents(buttonYes, buttonNo);
+	  },
+	
+	  applyFullscreenModal: function () {
+	    // create fullscreen modal html
+	    var modalHtml = '\
+				<style type="text/css">\
+					.fullscreen-modal{\
+		        align-items: center;\
+						background-color: rgba(255,255,255,.8);\
+						display: none;\
+						height: 100%;\
+		        justify-content: center;\
+						left: 0;\
+						position: fixed;\
+						width: 100%;\
+						text-align: center;\
+						top: 0;\
+	          z-index: 100;\
+					}\
+					\
+					.fullscreen-modal.show{\
+						display: flex;\
+					}\
+					\
+					button{\
+						\
+					}\
+					button:hover{\
+						cursor: pointer;\
+	        }\
+				</style>\
+	      <div class="fullscreen-modal">\
+	      	<div class="fullscreen-inner-wrap">\
+	      	<h3>View site in fullscreen mode?</h3>\
+	      		<button class="fullscreen-yes">Yes Please!</button>\
+	      		<button class="fullscreen-no">No thanks.</button>\
+	      	</div>\
+	    	</div>\
+	';
+	    // add hidden html to page
+	    this.fullscreenElement.insertAdjacentHTML('beforeend', modalHtml);
+	    // check if user has cookies, permanent and session
+	    var showModal = this.shouldShowModal();
+	
+	    if (showModal && this.manualModal === false) {
+	      this.showModal();
+	    }
+	  },
+	
+	  shouldShowModal: function () {
+	    // check if session cookie
+	    var sessionCookie = Cookies.get('fullscreen-session');
+	    if (sessionCookie !== undefined) {
+	      return sessionCookie === 'true';
+	    }
+	
+	    // if no session cookie check for permanent cookie
+	    if (sessionCookie === undefined) {
+	      var permanentCookie = Cookies.get('fullscreen-permanent');
+	      if (permanentCookie !== undefined) {
+	        return permanentCookie === 'true';
+	      }
+	    }
+	
+	    // if we get here, we show modal
+	    return true;
+	
+	  },
+	
+	  setModalButtonEvents: function (buttonYes, buttonNo) {
+	    buttonYes.addEventListener('click', this.fullscreenYes.bind(this));
+	    buttonNo.addEventListener('click', this.fullscreenNo.bind(this));
+	  },
+	
+	  enterFullScreen: function () {
+	    // get element at top of page
+	    var element = document.elementFromPoint(window.innerWidth / 2, 0);
+	    // go full screen
+	    Fscreen.default.requestFullscreen(FullScreen.fullscreenElement);
+	    // scroll to saved scroll position
+	    // ScrollToElement(element, {
+	    //   offset: 0,
+	    //   ease: 'out-bounce',
+	    //   duration: 500
+	    // });
+	    // Utils.scrollToElement(element);
+	    this.scrollToElement = element;
+	  },
+	
+	  fullscreenYes: function () {
+	    if (this.manualFullScreenToggle === false) {
+	      //hide modal
+	      this.toggleModal();
+	      this.goFullScreen();
+	    } else {
+	      // trigger custom yes event
+	      document.dispatchEvent(
+	        new CustomEvent('barbaFullScreenPreferenceYes', {
+	          bubbles: false,
+	          cancelable: false
+	        })
+	      );
+	    }
+	    this.setFullscreenYesCookies();
+	  },
+	
+	  fullscreenNo: function () {
+	    if (this.manualFullScreenToggle === false) {
+	      //hide modal
+	      this.toggleModal();
+	    } else {
+	      // trigger custom no event
+	      document.dispatchEvent(
+	        new CustomEvent('barbaFullScreenPreferenceNo', {
+	          bubbles: false,
+	          cancelable: false
+	        })
+	      );
+	    }
+	    this.setFullscreenNoCookies();
+	  },
+	
+	  setFullscreenYesCookies: function () {
+	    // set permanent
+	    Cookies.set('fullscreen-permanent', true, {expires: 365});
+	    // set session
+	    Cookies.set('fullscreen-session', true);
+	  },
+	
+	  setFullscreenNoCookies: function () {
+	    // set permanent
+	    Cookies.set('fullscreen-permanent', false, {expires: 365});
+	    // set session
+	    Cookies.set('fullscreen-session', false);
 	  }
+	
 	};
 	
-	module.exports = Dispatcher;
+	module.exports = FullScreen;
 
 
 /***/ }),
 /* 9 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-	/**
-	 * HistoryManager helps to keep track of the navigation
-	 *
-	 * @namespace Barba.HistoryManager
-	 * @type {Object}
-	 */
-	var Promise = __webpack_require__(1);
-	var Dom = __webpack_require__(10);
+	'use strict';
 	
-	var HistoryManager = {
-	  /**
-	   * Keep track of the status in historic order
-	   *
-	   * @memberOf Barba.HistoryManager
-	   * @readOnly
-	   * @type {Array}
-	   */
-	  history: [],
-	
-	  /**
-	   * Keep track of an activePopStateEvent
-	   *
-	   * @memberOf Barba.HistoryManager
-	   * @readOnly
-	   * @type {Array}
-	   */
-	  activePopStateEvent: false,
-	
-	  /**
-	   * Keep track of an pageTransition
-	   *
-	   * @memberOf Barba.HistoryManager
-	   * @readOnly
-	   * @type {Array}
-	   */
-	  activePageTransition: false,
-	
-	
-	  /**
-	   * Track clicked urls when in transition - only tracks last link clicked
-	   *
-	   * @memberOf Barba.HistoryManager
-	   * @readOnly
-	   * @type {Array}
-	   */
-	  queued_url: [],
-	
-	  /**
-	   * Add a new set of url and namespace
-	   *
-	   * @memberOf Barba.HistoryManager
-	   * @param {String} url
-	   * @param {String} namespace
-	   * @private
-	   */
-	  add: function(url, namespace, pageTitle) {
-	    var FullScreen = __webpack_require__(11);
-	    // send a page load event to google analytics
-	    var isFullScreen = FullScreen.fullscreenElement();
-	    var pageId = Dom.getPageId();
-	    var currentMenuItemId = Dom.getCurrentMenuItem();
-	    var yOffset = isFullScreen ? document.querySelector('.fullscreen-wrapper').getBoundingClientRect().top : window.scrollY;
-	
-	    if (!namespace)
-	      namespace = undefined;
-	
-	    if(!pageTitle)
-	      pageTitle = undefined;
-	
-	    var urlObject = {
-	      url: url,
-	      namespace:      namespace,
-	      pageTitle:      pageTitle,
-	      scrollPosition: yOffset
-	    };
-	
-	    if(typeof ga !== 'undefined') {
-	      ga('send', {'hitType': 'pageview', 'page': url, 'title': pageTitle});
-	    }
-	
-	    this.history.push(urlObject);
-	
-	    if(isFullScreen && !this.activePopStateEvent) {
-	      this.addHistoryToBrowser(urlObject, pageId, currentMenuItemId);
-	    }
-	  },
-	
-	  addSingleUrlToHistory: function(urlObject) {
-	    return new Promise(function(resolve, reject) {
-	      document.title = urlObject.pageTitle;
-	      var pageId = Dom.getPageId();
-	      var currentMenuItemId = Dom.getCurrentMenuItem();
-	
-	      HistoryManager.addHistoryToBrowser(urlObject, pageId, currentMenuItemId);
-	
-	      // add to HistoryManager history
-	      HistoryManager.add(urlObject.url, urlObject.namespace, urlObject.pageTitle);
-	      resolve(true);
-	    });
-	  },
-	
-	  addHistoryToBrowser: function(urlObject, pageId, currentMenuItemId) {
-	    // add to browser history
-	    window.history.pushState({
-	      url:               urlObject.url,
-	      pageId:            pageId,
-	      currentMenuItemId: currentMenuItemId
-	    }, urlObject.title, urlObject.url);
-	  },
-	
-	  /**
-	   * Return information about the current status
-	   *
-	   * @memberOf Barba.HistoryManager
-	   * @return {Object}
-	   */
-	  currentStatus: function() {
-	    return this.history[this.history.length - 1];
-	  },
-	
-	  /**
-	   * Return information about the previous status
-	   *
-	   * @memberOf Barba.HistoryManager
-	   * @return {Object}
-	   */
-	  prevStatus: function() {
-	    var history = this.history;
-	
-	    if (history.length < 2)
-	      return null;
-	
-	    return history[history.length - 2];
-	  },
-	
-	  setPopStateActiveState: function(state) {
-	    this.activePopStateEvent = state;
-	  },
-	
-	  setPageTransitionActiveState: function(state) {
-	    this.activePageTransition = state;
-	  }
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	var key = {
+	  fullscreenEnabled: 0,
+	  fullscreenElement: 1,
+	  requestFullscreen: 2,
+	  exitFullscreen: 3,
+	  fullscreenchange: 4,
+	  fullscreenerror: 5
 	};
 	
-	module.exports = HistoryManager;
-
+	var webkit = ['webkitFullscreenEnabled', 'webkitFullscreenElement', 'webkitRequestFullscreen', 'webkitExitFullscreen', 'webkitfullscreenchange', 'webkitfullscreenerror'];
+	
+	var moz = ['mozFullScreenEnabled', 'mozFullScreenElement', 'mozRequestFullScreen', 'mozCancelFullScreen', 'mozfullscreenchange', 'mozfullscreenerror'];
+	
+	var ms = ['msFullscreenEnabled', 'msFullscreenElement', 'msRequestFullscreen', 'msExitFullscreen', 'MSFullscreenChange', 'MSFullscreenError'];
+	
+	// so it doesn't throw if no window or document
+	var document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
+	
+	var vendor = 'fullscreenEnabled' in document && Object.keys(key) || webkit[0] in document && webkit || moz[0] in document && moz || ms[0] in document && ms || [];
+	
+	exports.default = {
+	  requestFullscreen: function requestFullscreen(element) {
+	    return element[vendor[key.requestFullscreen]]();
+	  },
+	  requestFullscreenFunction: function requestFullscreenFunction(element) {
+	    return element[vendor[key.requestFullscreen]];
+	  },
+	  get exitFullscreen() {
+	    return document[vendor[key.exitFullscreen]].bind(document);
+	  },
+	  addEventListener: function addEventListener(type, handler, options) {
+	    return document.addEventListener(vendor[key[type]], handler, options);
+	  },
+	  removeEventListener: function removeEventListener(type, handler, options) {
+	    return document.removeEventListener(vendor[key[type]], handler, options);
+	  },
+	  get fullscreenEnabled() {
+	    return Boolean(document[vendor[key.fullscreenEnabled]]);
+	  },
+	  set fullscreenEnabled(val) {},
+	  get fullscreenElement() {
+	    return document[vendor[key.fullscreenElement]];
+	  },
+	  set fullscreenElement(val) {},
+	  get onfullscreenchange() {
+	    return document[('on' + vendor[key.fullscreenchange]).toLowerCase()];
+	  },
+	  set onfullscreenchange(handler) {
+	    return document[('on' + vendor[key.fullscreenchange]).toLowerCase()] = handler;
+	  },
+	  get onfullscreenerror() {
+	    return document[('on' + vendor[key.fullscreenerror]).toLowerCase()];
+	  },
+	  set onfullscreenerror(handler) {
+	    return document[('on' + vendor[key.fullscreenerror]).toLowerCase()] = handler;
+	  }
+	};
 
 /***/ }),
 /* 10 */
@@ -1611,416 +1857,853 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 11 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-	var Fscreen = __webpack_require__(12);
-	var Dom = __webpack_require__(10);
-	var Cookies = __webpack_require__(13);
+	/* WEBPACK VAR INJECTION */(function(global) {
+	var NativeCustomEvent = global.CustomEvent;
+	
+	function useNative () {
+	  try {
+	    var p = new NativeCustomEvent('cat', { detail: { foo: 'bar' } });
+	    return  'cat' === p.type && 'bar' === p.detail.foo;
+	  } catch (e) {
+	  }
+	  return false;
+	}
 	
 	/**
-	 * Implements fscreen for fullscreen functionalities
+	 * Cross-browser `CustomEvent` constructor.
 	 *
-	 * @type {Object}
-	 * @namespace Barba.FullScreen
+	 * https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent.CustomEvent
+	 *
+	 * @public
 	 */
 	
-	var FullScreen = {
-	  currentUrl: null,
-		preference: false,
-	  modal: null,
-	  isFullscreen: false,
-	  fullscreenElement:       function() {
-	    return Fscreen.default.fullscreenElement !== null;
-	  },
-	  fullScreenOnChangeEvent: function() {
-	    this.isFullscreen = !this.isFullscreen;
-	  },
-		initFullScreen: function(options){
-			//dom should already be loaded here
-			if(Fscreen.default.fullscreenEnabled){
-				document.querySelector('body').classList.add('fullscreen-capable');
-				this.setFullScreenToggle();
-				this.preference = options.showFullscreenModal
-				this.initFullscreenModal();
-			}else{
-				//browser is not capable
-				document.querySelector('.fullscreen-toggle').style.display = 'none';
-			}
-		},
-		setFullScreenToggle: function(){
-			document.querySelector('.fullscreen-toggle').addEventListener('click', function(e) {
-				e.preventDefault();
-				FullScreen.goFullScreen();
-			});
-		},
-	  replaceBodyClasses:      function() {
-	    var body = document.getElementsByTagName('body')[0];
-	    body.className = Dom.currentBodyClasses;
-	  },
-		goFullScreen: function(){
-			Fscreen.default.requestFullscreen(document.querySelector('.fullscreen'));
-			if(this.preference === false){
-				this.preference = true;
-				this.setFullscreenYesCookies();
-			}
-		},
-		initFullscreenModal: function(){
-			if(this.preference === true){
-				FullScreen.applyFullscreenModal();
-			}
-		},
-	  applyFullscreenModal: function(){
-	    // create fullscreen modal html
-	    var modalHtml = '\
-				<style type="text/css">\
-					.fullscreen-modal{\
-		        align-items: center;\
-						background-color: rgba(255,255,255,.8);\
-						display: none;\
-						height: 100%;\
-		        justify-content: center;\
-						left: 0;\
-						position: fixed;\
-						width: 100%;\
-						text-align: center;\
-						top: 0;\
-	          z-index: 100;\
-					}\
-					\
-					.fullscreen-modal.show{\
-						display: flex;\
-					}\
-					\
-					button{\
-						\
-					}\
-					button:hover{\
-						cursor: pointer;\
-	        }\
-				</style>\
-	      <div class="fullscreen-modal">\
-	      	<div class="fullscreen-inner-wrap">\
-	      	<h3>View site in fullscreen mode?</h3>\
-	      		<button class="fullscreen-yes">Yes Please!</button>\
-	      		<button class="fullscreen-no">No thanks.</button>\
-	      	</div>\
-	    	</div>\
-	';
-	    // add hidden html to page
-		  document.querySelector('.fullscreen').insertAdjacentHTML('beforeend', modalHtml);
-	    // check if user has cookies, permanent and session
-		  var showModal = this.shouldShowModal();
-	    if(showModal){
-		    this.modal = document.querySelector('.fullscreen-modal');
-		    var buttonYes = this.modal.querySelector('.fullscreen-yes');
-		    var buttonNo = this.modal.querySelector('.fullscreen-no');
+	module.exports = useNative() ? NativeCustomEvent :
 	
-		    this.modal.classList.toggle('show');
+	// IE >= 9
+	'undefined' !== typeof document && 'function' === typeof document.createEvent ? function CustomEvent (type, params) {
+	  var e = document.createEvent('CustomEvent');
+	  if (params) {
+	    e.initCustomEvent(type, params.bubbles, params.cancelable, params.detail);
+	  } else {
+	    e.initCustomEvent(type, false, false, void 0);
+	  }
+	  return e;
+	} :
 	
-		    this.setModalButtonEvents(buttonYes, buttonNo)
-	    }
-	  },
-		shouldShowModal: function(){
-	  	// check if session cookie
-			var sessionCookie = Cookies.get('fullscreen-session');
-			if(sessionCookie !== undefined){
-				return sessionCookie === 'true';
-			}
+	// IE <= 8
+	function CustomEvent (type, params) {
+	  var e = document.createEventObject();
+	  e.type = type;
+	  if (params) {
+	    e.bubbles = Boolean(params.bubbles);
+	    e.cancelable = Boolean(params.cancelable);
+	    e.detail = params.detail;
+	  } else {
+	    e.bubbles = false;
+	    e.cancelable = false;
+	    e.detail = void 0;
+	  }
+	  return e;
+	}
 	
-			// if no session cookie check for permanent cookie
-			if(sessionCookie === undefined){
-				var permanentCookie = Cookies.get('fullscreen-permanent');
-				if(permanentCookie !== undefined){
-					return permanentCookie === 'true';
-				}
-			}
-	
-			// if we get here, we show modal
-			return true;
-	
-		},
-		setModalButtonEvents: function(buttonYes, buttonNo){
-	  	buttonYes.addEventListener('click', this.fullscreenYes.bind(this) );
-	  	buttonNo.addEventListener('click', this.fullscreenNo.bind(this) );
-		},
-		fullscreenYes: function(){
-	  	//hide modal
-			this.modal.classList.toggle('show');
-			Fscreen.default.requestFullscreen(document.querySelector('.fullscreen'));
-			this.setFullscreenYesCookies();
-		},
-		fullscreenNo: function(){
-			//hide modal
-			this.modal.classList.toggle('show');
-	  	this.setFullscreenNoCookies();
-		},
-		setFullscreenYesCookies: function(){
-	  	// set permanent
-			Cookies.set('fullscreen-permanent', true, { expires: 365 });
-			// set session
-			Cookies.set('fullscreen-session', true);
-		},
-		setFullscreenNoCookies: function(){
-			// set permanent
-			Cookies.set('fullscreen-permanent', false, { expires: 365 });
-			// set session
-			Cookies.set('fullscreen-session', false);
-		}
-	
-	};
-	
-	Fscreen.default.addEventListener('fullscreenchange', FullScreen.fullScreenOnChangeEvent.bind(FullScreen), false);
-	module.exports = FullScreen;
-
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ }),
 /* 12 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	'use strict';
+	/* smoothscroll v0.4.0 - 2018 - Dustan Kasten, Jeremias Menichelli - MIT License */
+	(function () {
+	  'use strict';
 	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	var key = {
-	  fullscreenEnabled: 0,
-	  fullscreenElement: 1,
-	  requestFullscreen: 2,
-	  exitFullscreen: 3,
-	  fullscreenchange: 4,
-	  fullscreenerror: 5
-	};
+	  // polyfill
+	  function polyfill() {
+	    // aliases
+	    var w = window;
+	    var d = document;
 	
-	var webkit = ['webkitFullscreenEnabled', 'webkitFullscreenElement', 'webkitRequestFullscreen', 'webkitExitFullscreen', 'webkitfullscreenchange', 'webkitfullscreenerror'];
+	    // return if scroll behavior is supported and polyfill is not forced
+	    if (
+	      'scrollBehavior' in d.documentElement.style &&
+	      w.__forceSmoothScrollPolyfill__ !== true
+	    ) {
+	      return;
+	    }
 	
-	var moz = ['mozFullScreenEnabled', 'mozFullScreenElement', 'mozRequestFullScreen', 'mozCancelFullScreen', 'mozfullscreenchange', 'mozfullscreenerror'];
+	    // globals
+	    var Element = w.HTMLElement || w.Element;
+	    var SCROLL_TIME = 468;
 	
-	var ms = ['msFullscreenEnabled', 'msFullscreenElement', 'msRequestFullscreen', 'msExitFullscreen', 'MSFullscreenChange', 'MSFullscreenError'];
+	    // object gathering original scroll methods
+	    var original = {
+	      scroll: w.scroll || w.scrollTo,
+	      scrollBy: w.scrollBy,
+	      elementScroll: Element.prototype.scroll || scrollElement,
+	      scrollIntoView: Element.prototype.scrollIntoView
+	    };
 	
-	// so it doesn't throw if no window or document
-	var document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
+	    // define timing method
+	    var now =
+	      w.performance && w.performance.now
+	        ? w.performance.now.bind(w.performance)
+	        : Date.now;
 	
-	var vendor = 'fullscreenEnabled' in document && Object.keys(key) || webkit[0] in document && webkit || moz[0] in document && moz || ms[0] in document && ms || [];
+	    /**
+	     * indicates if a the current browser is made by Microsoft
+	     * @method isMicrosoftBrowser
+	     * @param {String} userAgent
+	     * @returns {Boolean}
+	     */
+	    function isMicrosoftBrowser(userAgent) {
+	      var userAgentPatterns = ['MSIE ', 'Trident/', 'Edge/'];
 	
-	exports.default = {
-	  requestFullscreen: function requestFullscreen(element) {
-	    return element[vendor[key.requestFullscreen]]();
-	  },
-	  requestFullscreenFunction: function requestFullscreenFunction(element) {
-	    return element[vendor[key.requestFullscreen]];
-	  },
-	  get exitFullscreen() {
-	    return document[vendor[key.exitFullscreen]].bind(document);
-	  },
-	  addEventListener: function addEventListener(type, handler, options) {
-	    return document.addEventListener(vendor[key[type]], handler, options);
-	  },
-	  removeEventListener: function removeEventListener(type, handler, options) {
-	    return document.removeEventListener(vendor[key[type]], handler, options);
-	  },
-	  get fullscreenEnabled() {
-	    return Boolean(document[vendor[key.fullscreenEnabled]]);
-	  },
-	  set fullscreenEnabled(val) {},
-	  get fullscreenElement() {
-	    return document[vendor[key.fullscreenElement]];
-	  },
-	  set fullscreenElement(val) {},
-	  get onfullscreenchange() {
-	    return document[('on' + vendor[key.fullscreenchange]).toLowerCase()];
-	  },
-	  set onfullscreenchange(handler) {
-	    return document[('on' + vendor[key.fullscreenchange]).toLowerCase()] = handler;
-	  },
-	  get onfullscreenerror() {
-	    return document[('on' + vendor[key.fullscreenerror]).toLowerCase()];
-	  },
-	  set onfullscreenerror(handler) {
-	    return document[('on' + vendor[key.fullscreenerror]).toLowerCase()] = handler;
+	      return new RegExp(userAgentPatterns.join('|')).test(userAgent);
+	    }
+	
+	    /*
+	     * IE has rounding bug rounding down clientHeight and clientWidth and
+	     * rounding up scrollHeight and scrollWidth causing false positives
+	     * on hasScrollableSpace
+	     */
+	    var ROUNDING_TOLERANCE = isMicrosoftBrowser(w.navigator.userAgent) ? 1 : 0;
+	
+	    /**
+	     * changes scroll position inside an element
+	     * @method scrollElement
+	     * @param {Number} x
+	     * @param {Number} y
+	     * @returns {undefined}
+	     */
+	    function scrollElement(x, y) {
+	      this.scrollLeft = x;
+	      this.scrollTop = y;
+	    }
+	
+	    /**
+	     * returns result of applying ease math function to a number
+	     * @method ease
+	     * @param {Number} k
+	     * @returns {Number}
+	     */
+	    function ease(k) {
+	      return 0.5 * (1 - Math.cos(Math.PI * k));
+	    }
+	
+	    /**
+	     * indicates if a smooth behavior should be applied
+	     * @method shouldBailOut
+	     * @param {Number|Object} firstArg
+	     * @returns {Boolean}
+	     */
+	    function shouldBailOut(firstArg) {
+	      if (
+	        firstArg === null ||
+	        typeof firstArg !== 'object' ||
+	        firstArg.behavior === undefined ||
+	        firstArg.behavior === 'auto' ||
+	        firstArg.behavior === 'instant'
+	      ) {
+	        // first argument is not an object/null
+	        // or behavior is auto, instant or undefined
+	        return true;
+	      }
+	
+	      if (typeof firstArg === 'object' && firstArg.behavior === 'smooth') {
+	        // first argument is an object and behavior is smooth
+	        return false;
+	      }
+	
+	      // throw error when behavior is not supported
+	      throw new TypeError(
+	        'behavior member of ScrollOptions ' +
+	          firstArg.behavior +
+	          ' is not a valid value for enumeration ScrollBehavior.'
+	      );
+	    }
+	
+	    /**
+	     * indicates if an element has scrollable space in the provided axis
+	     * @method hasScrollableSpace
+	     * @param {Node} el
+	     * @param {String} axis
+	     * @returns {Boolean}
+	     */
+	    function hasScrollableSpace(el, axis) {
+	      if (axis === 'Y') {
+	        return el.clientHeight + ROUNDING_TOLERANCE < el.scrollHeight;
+	      }
+	
+	      if (axis === 'X') {
+	        return el.clientWidth + ROUNDING_TOLERANCE < el.scrollWidth;
+	      }
+	    }
+	
+	    /**
+	     * indicates if an element has a scrollable overflow property in the axis
+	     * @method canOverflow
+	     * @param {Node} el
+	     * @param {String} axis
+	     * @returns {Boolean}
+	     */
+	    function canOverflow(el, axis) {
+	      var overflowValue = w.getComputedStyle(el, null)['overflow' + axis];
+	
+	      return overflowValue === 'auto' || overflowValue === 'scroll';
+	    }
+	
+	    /**
+	     * indicates if an element can be scrolled in either axis
+	     * @method isScrollable
+	     * @param {Node} el
+	     * @param {String} axis
+	     * @returns {Boolean}
+	     */
+	    function isScrollable(el) {
+	      var isScrollableY = hasScrollableSpace(el, 'Y') && canOverflow(el, 'Y');
+	      var isScrollableX = hasScrollableSpace(el, 'X') && canOverflow(el, 'X');
+	
+	      return isScrollableY || isScrollableX;
+	    }
+	
+	    /**
+	     * finds scrollable parent of an element
+	     * @method findScrollableParent
+	     * @param {Node} el
+	     * @returns {Node} el
+	     */
+	    function findScrollableParent(el) {
+	      var isBody;
+	
+	      do {
+	        el = el.parentNode;
+	
+	        isBody = el === d.body;
+	      } while (isBody === false && isScrollable(el) === false);
+	
+	      isBody = null;
+	
+	      return el;
+	    }
+	
+	    /**
+	     * self invoked function that, given a context, steps through scrolling
+	     * @method step
+	     * @param {Object} context
+	     * @returns {undefined}
+	     */
+	    function step(context) {
+	      var time = now();
+	      var value;
+	      var currentX;
+	      var currentY;
+	      var elapsed = (time - context.startTime) / SCROLL_TIME;
+	
+	      // avoid elapsed times higher than one
+	      elapsed = elapsed > 1 ? 1 : elapsed;
+	
+	      // apply easing to elapsed time
+	      value = ease(elapsed);
+	
+	      currentX = context.startX + (context.x - context.startX) * value;
+	      currentY = context.startY + (context.y - context.startY) * value;
+	
+	      context.method.call(context.scrollable, currentX, currentY);
+	
+	      // scroll more if we have not reached our destination
+	      if (currentX !== context.x || currentY !== context.y) {
+	        w.requestAnimationFrame(step.bind(w, context));
+	      }
+	    }
+	
+	    /**
+	     * scrolls window or element with a smooth behavior
+	     * @method smoothScroll
+	     * @param {Object|Node} el
+	     * @param {Number} x
+	     * @param {Number} y
+	     * @returns {undefined}
+	     */
+	    function smoothScroll(el, x, y) {
+	      var scrollable;
+	      var startX;
+	      var startY;
+	      var method;
+	      var startTime = now();
+	
+	      // define scroll context
+	      if (el === d.body) {
+	        scrollable = w;
+	        startX = w.scrollX || w.pageXOffset;
+	        startY = w.scrollY || w.pageYOffset;
+	        method = original.scroll;
+	      } else {
+	        scrollable = el;
+	        startX = el.scrollLeft;
+	        startY = el.scrollTop;
+	        method = scrollElement;
+	      }
+	
+	      // scroll looping over a frame
+	      step({
+	        scrollable: scrollable,
+	        method: method,
+	        startTime: startTime,
+	        startX: startX,
+	        startY: startY,
+	        x: x,
+	        y: y
+	      });
+	    }
+	
+	    // ORIGINAL METHODS OVERRIDES
+	    // w.scroll and w.scrollTo
+	    w.scroll = w.scrollTo = function() {
+	      // avoid action when no arguments are passed
+	      if (arguments[0] === undefined) {
+	        return;
+	      }
+	
+	      // avoid smooth behavior if not required
+	      if (shouldBailOut(arguments[0]) === true) {
+	        original.scroll.call(
+	          w,
+	          arguments[0].left !== undefined
+	            ? arguments[0].left
+	            : typeof arguments[0] !== 'object'
+	              ? arguments[0]
+	              : w.scrollX || w.pageXOffset,
+	          // use top prop, second argument if present or fallback to scrollY
+	          arguments[0].top !== undefined
+	            ? arguments[0].top
+	            : arguments[1] !== undefined
+	              ? arguments[1]
+	              : w.scrollY || w.pageYOffset
+	        );
+	
+	        return;
+	      }
+	
+	      // LET THE SMOOTHNESS BEGIN!
+	      smoothScroll.call(
+	        w,
+	        d.body,
+	        arguments[0].left !== undefined
+	          ? ~~arguments[0].left
+	          : w.scrollX || w.pageXOffset,
+	        arguments[0].top !== undefined
+	          ? ~~arguments[0].top
+	          : w.scrollY || w.pageYOffset
+	      );
+	    };
+	
+	    // w.scrollBy
+	    w.scrollBy = function() {
+	      // avoid action when no arguments are passed
+	      if (arguments[0] === undefined) {
+	        return;
+	      }
+	
+	      // avoid smooth behavior if not required
+	      if (shouldBailOut(arguments[0])) {
+	        original.scrollBy.call(
+	          w,
+	          arguments[0].left !== undefined
+	            ? arguments[0].left
+	            : typeof arguments[0] !== 'object' ? arguments[0] : 0,
+	          arguments[0].top !== undefined
+	            ? arguments[0].top
+	            : arguments[1] !== undefined ? arguments[1] : 0
+	        );
+	
+	        return;
+	      }
+	
+	      // LET THE SMOOTHNESS BEGIN!
+	      smoothScroll.call(
+	        w,
+	        d.body,
+	        ~~arguments[0].left + (w.scrollX || w.pageXOffset),
+	        ~~arguments[0].top + (w.scrollY || w.pageYOffset)
+	      );
+	    };
+	
+	    // Element.prototype.scroll and Element.prototype.scrollTo
+	    Element.prototype.scroll = Element.prototype.scrollTo = function() {
+	      // avoid action when no arguments are passed
+	      if (arguments[0] === undefined) {
+	        return;
+	      }
+	
+	      // avoid smooth behavior if not required
+	      if (shouldBailOut(arguments[0]) === true) {
+	        // if one number is passed, throw error to match Firefox implementation
+	        if (typeof arguments[0] === 'number' && arguments[1] === undefined) {
+	          throw new SyntaxError('Value could not be converted');
+	        }
+	
+	        original.elementScroll.call(
+	          this,
+	          // use left prop, first number argument or fallback to scrollLeft
+	          arguments[0].left !== undefined
+	            ? ~~arguments[0].left
+	            : typeof arguments[0] !== 'object' ? ~~arguments[0] : this.scrollLeft,
+	          // use top prop, second argument or fallback to scrollTop
+	          arguments[0].top !== undefined
+	            ? ~~arguments[0].top
+	            : arguments[1] !== undefined ? ~~arguments[1] : this.scrollTop
+	        );
+	
+	        return;
+	      }
+	
+	      var left = arguments[0].left;
+	      var top = arguments[0].top;
+	
+	      // LET THE SMOOTHNESS BEGIN!
+	      smoothScroll.call(
+	        this,
+	        this,
+	        typeof left === 'undefined' ? this.scrollLeft : ~~left,
+	        typeof top === 'undefined' ? this.scrollTop : ~~top
+	      );
+	    };
+	
+	    // Element.prototype.scrollBy
+	    Element.prototype.scrollBy = function() {
+	      // avoid action when no arguments are passed
+	      if (arguments[0] === undefined) {
+	        return;
+	      }
+	
+	      // avoid smooth behavior if not required
+	      if (shouldBailOut(arguments[0]) === true) {
+	        original.elementScroll.call(
+	          this,
+	          arguments[0].left !== undefined
+	            ? ~~arguments[0].left + this.scrollLeft
+	            : ~~arguments[0] + this.scrollLeft,
+	          arguments[0].top !== undefined
+	            ? ~~arguments[0].top + this.scrollTop
+	            : ~~arguments[1] + this.scrollTop
+	        );
+	
+	        return;
+	      }
+	
+	      this.scroll({
+	        left: ~~arguments[0].left + this.scrollLeft,
+	        top: ~~arguments[0].top + this.scrollTop,
+	        behavior: arguments[0].behavior
+	      });
+	    };
+	
+	    // Element.prototype.scrollIntoView
+	    Element.prototype.scrollIntoView = function() {
+	      // avoid smooth behavior if not required
+	      if (shouldBailOut(arguments[0]) === true) {
+	        original.scrollIntoView.call(
+	          this,
+	          arguments[0] === undefined ? true : arguments[0]
+	        );
+	
+	        return;
+	      }
+	
+	      // LET THE SMOOTHNESS BEGIN!
+	      var scrollableParent = findScrollableParent(this);
+	      var parentRects = scrollableParent.getBoundingClientRect();
+	      var clientRects = this.getBoundingClientRect();
+	
+	      if (scrollableParent !== d.body) {
+	        // reveal element inside parent
+	        smoothScroll.call(
+	          this,
+	          scrollableParent,
+	          scrollableParent.scrollLeft + clientRects.left - parentRects.left,
+	          scrollableParent.scrollTop + clientRects.top - parentRects.top
+	        );
+	
+	        // reveal parent in viewport unless is fixed
+	        if (w.getComputedStyle(scrollableParent).position !== 'fixed') {
+	          w.scrollBy({
+	            left: parentRects.left,
+	            top: parentRects.top,
+	            behavior: 'smooth'
+	          });
+	        }
+	      } else {
+	        // reveal element in viewport
+	        w.scrollBy({
+	          left: clientRects.left,
+	          top: clientRects.top,
+	          behavior: 'smooth'
+	        });
+	      }
+	    };
 	  }
-	};
+	
+	  if (true) {
+	    // commonjs
+	    module.exports = { polyfill: polyfill };
+	  } else {
+	    // global
+	    polyfill();
+	  }
+	
+	}());
+
 
 /***/ }),
 /* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
-	 * JavaScript Cookie v2.2.0
-	 * https://github.com/js-cookie/js-cookie
+	var Dispatcher = __webpack_require__(14);
+	var Utils = __webpack_require__(6);
+	var HistoryManager = __webpack_require__(15);
+	var Pjax = __webpack_require__(16);
+	
+	/**
+	 * BaseView to be extended
 	 *
-	 * Copyright 2006, 2015 Klaus Hartl & Fagner Brack
-	 * Released under the MIT license
+	 * @namespace Barba.BaseView
+	 * @type {Object}
 	 */
-	;(function (factory) {
-		var registeredInModuleLoader = false;
-		if (true) {
-			!(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-			registeredInModuleLoader = true;
-		}
-		if (true) {
-			module.exports = factory();
-			registeredInModuleLoader = true;
-		}
-		if (!registeredInModuleLoader) {
-			var OldCookies = window.Cookies;
-			var api = window.Cookies = factory();
-			api.noConflict = function () {
-				window.Cookies = OldCookies;
-				return api;
-			};
-		}
-	}(function () {
-		function extend () {
-			var i = 0;
-			var result = {};
-			for (; i < arguments.length; i++) {
-				var attributes = arguments[ i ];
-				for (var key in attributes) {
-					result[key] = attributes[key];
-				}
-			}
-			return result;
-		}
+	var BaseView  = {
+	  /**
+	   * Namespace of the view.
+	   * (need to be associated with the data-namespace of the container)
+	   *
+	   * @memberOf Barba.BaseView
+	   * @type {String}
+	   */
+	  namespace: null,
 	
-		function init (converter) {
-			function api (key, value, attributes) {
-				var result;
-				if (typeof document === 'undefined') {
-					return;
-				}
+	  /**
+	   * Helper to extend the object
+	   *
+	   * @memberOf Barba.BaseView
+	   * @param  {Object} newObject
+	   * @return {Object} newInheritObject
+	   */
+	  extend: function(obj){
+	    return Utils.extend(this, obj);
+	  },
 	
-				// Write
+	  /**
+	   * Init the view.
+	   * P.S. Is suggested to init the view before starting Barba.Pjax.start(),
+	   * in this way .onEnter() and .onEnterCompleted() will be fired for the current
+	   * container when the page is loaded.
+	   *
+	   * @memberOf Barba.BaseView
+	   */
+	  init: function() {
+	    var _this = this;
 	
-				if (arguments.length > 1) {
-					attributes = extend({
-						path: '/'
-					}, api.defaults, attributes);
+	    Dispatcher.on('initStateChange',
+	      function(newStatus, oldStatus) {
+	        if (oldStatus && oldStatus.namespace === _this.namespace)
+	          _this.onLeave();
+	      }
+	    );
 	
-					if (typeof attributes.expires === 'number') {
-						var expires = new Date();
-						expires.setMilliseconds(expires.getMilliseconds() + attributes.expires * 864e+5);
-						attributes.expires = expires;
-					}
+	    Dispatcher.on('newPageReady',
+	      function(newStatus, oldStatus, container) {
+	        _this.container = container;
 	
-					// We're using "expires" because "max-age" is not supported by IE
-					attributes.expires = attributes.expires ? attributes.expires.toUTCString() : '';
+	        if (newStatus.namespace === _this.namespace)
+	          _this.onEnter();
+	      }
+	    );
 	
-					try {
-						result = JSON.stringify(value);
-						if (/^[\{\[]/.test(result)) {
-							value = result;
-						}
-					} catch (e) {}
+	    Dispatcher.on('transitionCompleted',
+	      function(newStatus, oldStatus) {
+	        if (newStatus.namespace === _this.namespace)
+	          _this.onEnterCompleted();
 	
-					if (!converter.write) {
-						value = encodeURIComponent(String(value))
-							.replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
-					} else {
-						value = converter.write(value, key);
-					}
+	        if (oldStatus && oldStatus.namespace === _this.namespace)
+	          _this.onLeaveCompleted();
 	
-					key = encodeURIComponent(String(key));
-					key = key.replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent);
-					key = key.replace(/[\(\)]/g, escape);
+	        if(HistoryManager.queued_url.length > 0) {
+	          // if a url made it to the queue list then it already passed the prevent check process
 	
-					var stringifiedAttributes = '';
+	          var newUrl = HistoryManager.queued_url[0];
+	          HistoryManager.queued_url = [];
+	          Pjax.goTo(newUrl);
+	        }
+	      }
+	    );
+	  },
 	
-					for (var attributeName in attributes) {
-						if (!attributes[attributeName]) {
-							continue;
-						}
-						stringifiedAttributes += '; ' + attributeName;
-						if (attributes[attributeName] === true) {
-							continue;
-						}
-						stringifiedAttributes += '=' + attributes[attributeName];
-					}
-					return (document.cookie = key + '=' + value + stringifiedAttributes);
-				}
+	 /**
+	  * This function will be fired when the container
+	  * is ready and attached to the DOM.
+	  *
+	  * @memberOf Barba.BaseView
+	  * @abstract
+	  */
+	  onEnter: function() {},
 	
-				// Read
+	  /**
+	   * This function will be fired when the transition
+	   * to this container has just finished.
+	   *
+	   * @memberOf Barba.BaseView
+	   * @abstract
+	   */
+	  onEnterCompleted: function() {},
 	
-				if (!key) {
-					result = {};
-				}
+	  /**
+	   * This function will be fired when the transition
+	   * to a new container has just started.
+	   *
+	   * @memberOf Barba.BaseView
+	   * @abstract
+	   */
+	  onLeave: function() {},
 	
-				// To prevent the for loop in the first place assign an empty array
-				// in case there are no cookies at all. Also prevents odd result when
-				// calling "get()"
-				var cookies = document.cookie ? document.cookie.split('; ') : [];
-				var rdecode = /(%[0-9A-Z]{2})+/g;
-				var i = 0;
+	  /**
+	   * This function will be fired when the container
+	   * has just been removed from the DOM.
+	   *
+	   * @memberOf Barba.BaseView
+	   * @abstract
+	   */
+	  onLeaveCompleted: function() {}
+	}
 	
-				for (; i < cookies.length; i++) {
-					var parts = cookies[i].split('=');
-					var cookie = parts.slice(1).join('=');
-	
-					if (!this.json && cookie.charAt(0) === '"') {
-						cookie = cookie.slice(1, -1);
-					}
-	
-					try {
-						var name = parts[0].replace(rdecode, decodeURIComponent);
-						cookie = converter.read ?
-							converter.read(cookie, name) : converter(cookie, name) ||
-							cookie.replace(rdecode, decodeURIComponent);
-	
-						if (this.json) {
-							try {
-								cookie = JSON.parse(cookie);
-							} catch (e) {}
-						}
-	
-						if (key === name) {
-							result = cookie;
-							break;
-						}
-	
-						if (!key) {
-							result[name] = cookie;
-						}
-					} catch (e) {}
-				}
-	
-				return result;
-			}
-	
-			api.set = api;
-			api.get = function (key) {
-				return api.call(api, key);
-			};
-			api.getJSON = function () {
-				return api.apply({
-					json: true
-				}, [].slice.call(arguments));
-			};
-			api.defaults = {};
-	
-			api.remove = function (key, attributes) {
-				api(key, '', extend(attributes, {
-					expires: -1
-				}));
-			};
-	
-			api.withConverter = init;
-	
-			return api;
-		}
-	
-		return init(function () {});
-	}));
+	module.exports = BaseView;
 
 
 /***/ }),
 /* 14 */
+/***/ (function(module, exports) {
+
+	/**
+	 * Little Dispatcher inspired by MicroEvent.js
+	 *
+	 * @namespace Barba.Dispatcher
+	 * @type {Object}
+	 */
+	var Dispatcher = {
+	  /**
+	   * Object that keeps all the events
+	   *
+	   * @memberOf Barba.Dispatcher
+	   * @readOnly
+	   * @type {Object}
+	   */
+	  events: {},
+	
+	  /**
+	   * Bind a callback to an event
+	   *
+	   * @memberOf Barba.Dispatcher
+	   * @param  {String} eventName
+	   * @param  {Function} function
+	   */
+	  on: function(e, f) {
+	    this.events[e] = this.events[e] || [];
+	    this.events[e].push(f);
+	  },
+	
+	  /**
+	   * Unbind event
+	   *
+	   * @memberOf Barba.Dispatcher
+	   * @param  {String} eventName
+	   * @param  {Function} function
+	   */
+	  off: function(e, f) {
+	    if(e in this.events === false)
+	      return;
+	
+	    this.events[e].splice(this.events[e].indexOf(f), 1);
+	  },
+	
+	  /**
+	   * Fire the event running all the event associated to it
+	   *
+	   * @memberOf Barba.Dispatcher
+	   * @param  {String} eventName
+	   * @param  {...*} args
+	   */
+	  trigger: function(e) {//e, ...args
+	    if (e in this.events === false)
+	      return;
+	
+	    for(var i = 0; i < this.events[e].length; i++){
+	      this.events[e][i].apply(this, Array.prototype.slice.call(arguments, 1));
+	    }
+	  }
+	};
+	
+	module.exports = Dispatcher;
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * HistoryManager helps to keep track of the navigation
+	 *
+	 * @namespace Barba.HistoryManager
+	 * @type {Object}
+	 */
+	var Promise = __webpack_require__(1);
+	var Dom = __webpack_require__(10);
+	
+	var HistoryManager = {
+	  /**
+	   * Keep track of the status in historic order
+	   *
+	   * @memberOf Barba.HistoryManager
+	   * @readOnly
+	   * @type {Array}
+	   */
+	  history: [],
+	
+	  /**
+	   * Keep track of an activePopStateEvent
+	   *
+	   * @memberOf Barba.HistoryManager
+	   * @readOnly
+	   * @type {Array}
+	   */
+	  activePopStateEvent: false,
+	
+	  /**
+	   * Keep track of an pageTransition
+	   *
+	   * @memberOf Barba.HistoryManager
+	   * @readOnly
+	   * @type {Array}
+	   */
+	  activePageTransition: false,
+	
+	
+	  /**
+	   * Track clicked urls when in transition - only tracks last link clicked
+	   *
+	   * @memberOf Barba.HistoryManager
+	   * @readOnly
+	   * @type {Array}
+	   */
+	  queued_url: [],
+	
+	  /**
+	   * Add a new set of url and namespace
+	   *
+	   * @memberOf Barba.HistoryManager
+	   * @param {String} url
+	   * @param {String} namespace
+	   * @private
+	   */
+	  add: function(url, namespace, pageTitle) {
+	    var FullScreen = __webpack_require__(8);
+	    // send a page load event to google analytics
+	    var isFullScreen = FullScreen.isFullscreen;
+	    var pageId = Dom.getPageId();
+	    var currentMenuItemId = Dom.getCurrentMenuItem();
+	    var yOffset = isFullScreen ? document.querySelector('.fullscreen-wrapper').getBoundingClientRect().top : window.scrollY;
+	
+	    if (!namespace)
+	      namespace = undefined;
+	
+	    if(!pageTitle)
+	      pageTitle = undefined;
+	
+	    var urlObject = {
+	      url: url,
+	      namespace:      namespace,
+	      pageTitle:      pageTitle,
+	      scrollPosition: yOffset
+	    };
+	
+	    if(typeof ga !== 'undefined') {
+	      ga('send', {'hitType': 'pageview', 'page': url, 'title': pageTitle});
+	    }
+	
+	    this.history.push(urlObject);
+	
+	    if(isFullScreen && !this.activePopStateEvent) {
+	      this.addHistoryToBrowser(urlObject, pageId, currentMenuItemId);
+	    }
+	  },
+	
+	  addSingleUrlToHistory: function(urlObject) {
+	    return new Promise(function(resolve, reject) {
+	      document.title = urlObject.pageTitle;
+	      var pageId = Dom.getPageId();
+	      var currentMenuItemId = Dom.getCurrentMenuItem();
+	
+	      HistoryManager.addHistoryToBrowser(urlObject, pageId, currentMenuItemId);
+	
+	      // add to HistoryManager history
+	      HistoryManager.add(urlObject.url, urlObject.namespace, urlObject.pageTitle);
+	      resolve(true);
+	    });
+	  },
+	
+	  addHistoryToBrowser: function(urlObject, pageId, currentMenuItemId) {
+	    // add to browser history
+	    window.history.pushState({
+	      url:               urlObject.url,
+	      pageId:            pageId,
+	      currentMenuItemId: currentMenuItemId
+	    }, urlObject.title, urlObject.url);
+	  },
+	
+	  /**
+	   * Return information about the current status
+	   *
+	   * @memberOf Barba.HistoryManager
+	   * @return {Object}
+	   */
+	  currentStatus: function() {
+	    return this.history[this.history.length - 1];
+	  },
+	
+	  /**
+	   * Return information about the previous status
+	   *
+	   * @memberOf Barba.HistoryManager
+	   * @return {Object}
+	   */
+	  prevStatus: function() {
+	    var history = this.history;
+	
+	    if (history.length < 2)
+	      return null;
+	
+	    return history[history.length - 2];
+	  },
+	
+	  setPopStateActiveState: function(state) {
+	    this.activePopStateEvent = state;
+	  },
+	
+	  setPageTransitionActiveState: function(state) {
+	    this.activePageTransition = state;
+	  }
+	};
+	
+	module.exports = HistoryManager;
+
+
+/***/ }),
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var Utils = __webpack_require__(6);
-	var Dispatcher = __webpack_require__(8);
-	var HideShowTransition = __webpack_require__(15);
-	var BaseCache = __webpack_require__(24);
+	var Dispatcher = __webpack_require__(14);
+	var HideShowTransition = __webpack_require__(17);
+	var BaseCache = __webpack_require__(26);
 	
-	var HistoryManager = __webpack_require__(9);
+	var HistoryManager = __webpack_require__(15);
 	var Dom = __webpack_require__(10);
 	
 	/**
@@ -2070,7 +2753,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  start: function(options) {
 	  	options = typeof options !== 'undefined' ? options : {};
 	  	options = {
-		    showFullscreenModal: typeof options.showFullscreenModal !== 'undefined' ? options.showFullscreenModal : false
+		    showFullscreenModal: typeof options.showFullscreenModal !== 'undefined' ? options.showFullscreenModal : false,
+			  manualModal: typeof options.manualModal !== 'undefined' ? options.manualModal : false,
+			  manualFullScreenToggle: typeof options.manualFullScreenToggle !== 'undefined' ? options.manualFullScreenToggle : false,
 	    };
 	
 	    this.init(options);
@@ -2085,7 +2770,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  init: function(options) {
 	    var container = this.Dom.getContainer();
 	    var wrapper = this.Dom.getWrapper();
-	    var FullScreen = __webpack_require__(11);
+	    var FullScreen = __webpack_require__(8);
 	
 	    wrapper.setAttribute('aria-live', 'polite');
 	
@@ -2258,7 +2943,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param {MouseEvent} evt
 	   */
 	  onLinkClick: function(evt) {
-	    var FullScreen = __webpack_require__(11);
+	    var FullScreen = __webpack_require__(8);
 	    var el = evt.target;
 	
 	    //Go up in the nodelist until we
@@ -2281,7 +2966,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var href = this.getHref(el);
 	
 	
-	        if(!FullScreen.fullscreenElement()) {
+	        if(!FullScreen.isFullscreen) {
 	      this.goTo(href);
 	        } else {
 	          this.onStateChange(href);
@@ -2386,6 +3071,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (this.History.currentStatus().url === newUrl)
 	      return false;
 	
+	    // check for cookie before loading
+			Utils.urlCookieSetCheck(newUrl);
 	    var newContainer = this.load(newUrl);
 	    this.History.add(newUrl, null, document.querySelector('title').textContent);
 	    var transition = Object.create(this.getTransition());
@@ -2450,12 +3137,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var BaseTransition = __webpack_require__(5);
-	var ScrollToElement = __webpack_require__(16);
-	var HistoryManager = __webpack_require__(9);
+	var ScrollToElement = __webpack_require__(18);
+	var HistoryManager = __webpack_require__(15);
 	var Promise = __webpack_require__(1);
 	
 	/**
@@ -2488,7 +3175,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      _this.fadeElementOut(_this.oldContainer).then(function () {
 	        if (HistoryManager.activePopStateEvent === false) {
 	          document.querySelector('.fullscreen-wrapper').scrollIntoView();
-	        } else if (Barba.FullScreen.fullscreenElement()) {
+	        } else if (Barba.FullScreen.isFullscreen) {
 	          // Here we're getting the scroll position of the next to last element in Barba.HistoryManager.history. The last element being the page we are currently on, next to last being the one we're going to (whether it's a forwards or backwards popstateevent).
 	          HideShowTransition.fullscreenSetScrollPosition(Math.abs(HistoryManager.history[HistoryManager.history.length - 2].scrollPosition));
 	        }
@@ -2509,12 +3196,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	    var el = this.newContainer;
-	
+		  var originalDisplayValue = el.currentStyle ? el.currentStyle.display : getComputedStyle(el, null).display;
 	    el.style.display = 'none';
 	    el.style.opacity = 0;
 	    el.style.visibility = 'visible';
-	    this.fadeElementIn(el).then(function () {
-	      if (Barba.FullScreen.fullscreenElement() === false) {
+	    this.fadeElementIn(el, originalDisplayValue).then(function () {
+	      if (Barba.FullScreen.isFullscreen === false) {
 	        if (window.location.hash !== '') {
 	          HideShowTransition.goTo(document.querySelector('#' + window.location.hash));
 	        }
@@ -2582,10 +3269,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var scroll = __webpack_require__(17);
+	var scroll = __webpack_require__(19);
 	
 	function calculateScrollOffset(elem, additionalOffset, alignment) {
 	  var body = document.body,
@@ -2620,15 +3307,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 17 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module dependencies.
 	 */
 	
-	var Tween = __webpack_require__(18);
-	var raf = __webpack_require__(23);
+	var Tween = __webpack_require__(20);
+	var raf = __webpack_require__(25);
 	
 	/**
 	 * Expose `scrollTo`.
@@ -2692,7 +3379,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	
@@ -2700,10 +3387,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module dependencies.
 	 */
 	
-	var Emitter = __webpack_require__(19);
-	var clone = __webpack_require__(20);
-	var type = __webpack_require__(21);
-	var ease = __webpack_require__(22);
+	var Emitter = __webpack_require__(21);
+	var clone = __webpack_require__(22);
+	var type = __webpack_require__(23);
+	var ease = __webpack_require__(24);
 	
 	/**
 	 * Expose `Tween`.
@@ -2875,7 +3562,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ }),
-/* 19 */
+/* 21 */
 /***/ (function(module, exports) {
 
 	
@@ -3042,7 +3729,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/**
@@ -3051,9 +3738,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var type;
 	try {
-	  type = __webpack_require__(21);
+	  type = __webpack_require__(23);
 	} catch (_) {
-	  type = __webpack_require__(21);
+	  type = __webpack_require__(23);
 	}
 	
 	/**
@@ -3105,7 +3792,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, exports) {
 
 	/**
@@ -3145,7 +3832,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, exports) {
 
 	
@@ -3321,7 +4008,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, exports) {
 
 	/**
@@ -3361,7 +4048,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 24 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var Utils = __webpack_require__(6);
@@ -3429,11 +4116,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var Utils = __webpack_require__(6);
-	var Pjax = __webpack_require__(14);
+	var Pjax = __webpack_require__(16);
 	
 	/**
 	 * Prefetch

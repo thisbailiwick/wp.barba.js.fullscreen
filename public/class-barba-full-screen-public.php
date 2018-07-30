@@ -95,7 +95,7 @@ class Barba_Full_Screen_Public {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name . '-barba-core', plugin_dir_url( __FILE__ ) . 'js/barba.js', array(), $this->version, true );
+		wp_enqueue_script( $this->plugin_name . '-barba-core', plugin_dir_url( __FILE__ ) . 'js/barba.min.js', array(), $this->version, true );
 	}
 
 }
